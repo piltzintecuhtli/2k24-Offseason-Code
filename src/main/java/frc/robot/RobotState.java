@@ -14,9 +14,6 @@ import frc.robot.subsystems.drive.drive.DriveConstants;
 import frc.robot.subsystems.vision.Camera;
 import frc.robot.util.AllianceFlipUtil;
 import java.util.Optional;
-import java.util.function.BooleanSupplier;
-import java.util.function.DoubleSupplier;
-import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.Setter;
 import org.littletonrobotics.junction.Logger;
@@ -49,15 +46,8 @@ public class RobotState {
 
   private static SwerveDrivePoseEstimator poseEstimator;
 
-  private static Supplier<Rotation2d> robotHeadingSupplier;
-  private static DoubleSupplier robotYawVelocitySupplier;
-  private static Supplier<Translation2d> robotFieldRelativeVelocitySupplier;
-  private static Supplier<SwerveModulePosition[]> modulePositionSupplier;
-  private static Supplier<Camera[]> camerasSupplier;
-  private static BooleanSupplier targetAquiredSupplier;
-  private static Supplier<Optional<Pose3d>[]> visionPrimaryPosesSupplier;
-  private static Supplier<Optional<Pose3d>[]> visionSecondaryPosesSupplier;
-  private static Supplier<double[]> visionFrameTimestampSupplier;
+  private static Rotation2d robotHeading;
+  private static SwerveModulePosition[] modulePositions;
 
   static {
     // Units: radians per second
@@ -76,72 +66,64 @@ public class RobotState {
     timeOfFlightMap.put(0.0, 0.0);
   }
 
-  public RobotState(
-      Supplier<Rotation2d> robotHeadingSupplier,
-      DoubleSupplier robotYawVelocitySupplier,
-      Supplier<Translation2d> robotFieldRelativeVelocitySupplier,
-      Supplier<SwerveModulePosition[]> modulePositionSupplier,
-      Supplier<Camera[]> camerasSupplier,
-      BooleanSupplier targetAquiredSupplier,
-      Supplier<Optional<Pose3d>[]> visionPrimaryPosesSupplier,
-      Supplier<Optional<Pose3d>[]> visionSecondaryPosesSupplier,
-      Supplier<double[]> visionFrameTimestampSupplier) {
-    RobotState.robotHeadingSupplier = robotHeadingSupplier;
-    RobotState.robotYawVelocitySupplier = robotYawVelocitySupplier;
-    RobotState.robotFieldRelativeVelocitySupplier = robotFieldRelativeVelocitySupplier;
-    RobotState.modulePositionSupplier = modulePositionSupplier;
-    RobotState.camerasSupplier = camerasSupplier;
-    RobotState.targetAquiredSupplier = targetAquiredSupplier;
-    RobotState.visionPrimaryPosesSupplier = visionPrimaryPosesSupplier;
-    RobotState.visionSecondaryPosesSupplier = visionSecondaryPosesSupplier;
-    RobotState.visionFrameTimestampSupplier = visionFrameTimestampSupplier;
-
+  public RobotState() {
     poseEstimator =
         new SwerveDrivePoseEstimator(
             DriveConstants.KINEMATICS,
-            robotHeadingSupplier.get(),
-            modulePositionSupplier.get(),
+            new Rotation2d(),
+            new SwerveModulePosition[4],
             new Pose2d(),
             DriveConstants.ODOMETRY_STANDARD_DEVIATIONS,
             VecBuilder.fill(0.0, 0.0, 0.0));
   }
 
-  private static final void addVisionMeasurement() {
-    if (targetAquiredSupplier.getAsBoolean()
-        && robotYawVelocitySupplier.getAsDouble() < Units.degreesToRadians(720.0)) {
-      for (int i = 0; i < visionPrimaryPosesSupplier.get().length; i++) {
-        if (visionSecondaryPosesSupplier.get()[i].isPresent()) {
+  public static void periodic(
+    Rotation2d robotHeading,
+    double robotYawVelocity,
+    Translation2d robotFieldRelativeVelocity,
+    SwerveModulePosition[] modulePositions,
+    Camera[] cameras,
+    boolean targetAquired,
+    Optional<Pose3d>[] visionPrimaryPoses,
+    Optional<Pose3d>[] visionSecondaryPoses,
+    double[] visionFrameTimestamps
+  ) {
+
+    RobotState.robotHeading = robotHeading;
+    RobotState.modulePositions = modulePositions;
+
+    poseEstimator.updateWithTime(
+        Timer.getFPGATimestamp(), robotHeading, modulePositions);
+
+        if (targetAquired
+        && robotYawVelocity < Units.degreesToRadians(720.0)) {
+      for (int i = 0; i < visionPrimaryPoses.length; i++) {
+        if (visionSecondaryPoses[i].isPresent()) {
           double xyStddev =
-              camerasSupplier.get()[i].getPrimaryXYStandardDeviationCoefficient()
-                  * Math.pow(camerasSupplier.get()[i].getAverageDistance(), 2.0)
-                  / camerasSupplier.get()[i].getTotalTargets()
-                  * camerasSupplier.get()[i].getHorizontalFOV();
+              cameras[i].getPrimaryXYStandardDeviationCoefficient()
+                  * Math.pow(cameras[i].getAverageDistance(), 2.0)
+                  / cameras[i].getTotalTargets()
+                  * cameras[i].getHorizontalFOV();
           poseEstimator.addVisionMeasurement(
-              visionPrimaryPosesSupplier.get()[i].get().toPose2d(),
-              visionFrameTimestampSupplier.get()[i],
+              visionPrimaryPoses[i].get().toPose2d(),
+              visionFrameTimestamps[i],
               VecBuilder.fill(xyStddev, xyStddev, Double.POSITIVE_INFINITY));
         }
       }
-      for (int i = 0; i < visionSecondaryPosesSupplier.get().length; i++) {
-        if (visionSecondaryPosesSupplier.get()[i].isPresent()) {
+      for (int i = 0; i < visionSecondaryPoses.length; i++) {
+        if (visionSecondaryPoses[i].isPresent()) {
           double xyStddev =
-              camerasSupplier.get()[i].getSecondaryXYStandardDeviationCoefficient()
-                  * Math.pow(camerasSupplier.get()[i].getAverageDistance(), 2.0)
-                  / camerasSupplier.get()[i].getTotalTargets()
-                  * camerasSupplier.get()[i].getHorizontalFOV();
+              cameras[i].getSecondaryXYStandardDeviationCoefficient()
+                  * Math.pow(cameras[i].getAverageDistance(), 2.0)
+                  / cameras[i].getTotalTargets()
+                  * cameras[i].getHorizontalFOV();
           poseEstimator.addVisionMeasurement(
-              visionSecondaryPosesSupplier.get()[i].get().toPose2d(),
-              visionFrameTimestampSupplier.get()[i],
+              visionSecondaryPoses[i].get().toPose2d(),
+              visionFrameTimestamps[i],
               VecBuilder.fill(xyStddev, xyStddev, Double.POSITIVE_INFINITY));
         }
       }
     }
-  }
-
-  public static void periodic() {
-    poseEstimator.updateWithTime(
-        Timer.getFPGATimestamp(), robotHeadingSupplier.get(), modulePositionSupplier.get());
-    addVisionMeasurement();
 
     Translation2d speakerPose =
         AllianceFlipUtil.apply(FieldConstants.Speaker.centerSpeakerOpening.toTranslation2d());
@@ -155,22 +137,21 @@ public class RobotState {
             .getEstimatedPosition()
             .getTranslation()
             .plus(
-                robotFieldRelativeVelocitySupplier
-                    .get()
+                robotFieldRelativeVelocity
                     .times(timeOfFlightMap.get(distanceToSpeaker)));
     Translation2d effectiveFeedAmpAimingPose =
         poseEstimator
             .getEstimatedPosition()
             .getTranslation()
             .plus(
-                robotFieldRelativeVelocitySupplier.get().times(timeOfFlightMap.get(distanceToAmp)));
+                robotFieldRelativeVelocity.times(timeOfFlightMap.get(distanceToAmp)));
     double effectiveDistanceToSpeaker = effectiveSpeakerAimingPose.getDistance(speakerPose);
     double effectiveDistanceToAmp = effectiveFeedAmpAimingPose.getDistance(ampPose);
 
     Rotation2d speakerTurretAngle =
-        speakerPose.minus(effectiveSpeakerAimingPose).getAngle().minus(robotHeadingSupplier.get());
+        speakerPose.minus(effectiveSpeakerAimingPose).getAngle().minus(robotHeading);
     Rotation2d feedAmpTurretAngle =
-        ampPose.minus(effectiveFeedAmpAimingPose).getAngle().minus(robotHeadingSupplier.get());
+        ampPose.minus(effectiveFeedAmpAimingPose).getAngle().minus(robotHeading);
     controlData =
         new ControlData(
             speakerTurretAngle,
@@ -207,7 +188,7 @@ public class RobotState {
   }
 
   public static void resetRobotPose(Pose2d pose) {
-    poseEstimator.resetPosition(robotHeadingSupplier.get(), modulePositionSupplier.get(), pose);
+    poseEstimator.resetPosition(robotHeading, modulePositions, pose);
   }
 
   public static record ControlData(

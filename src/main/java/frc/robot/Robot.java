@@ -133,7 +133,7 @@ public class Robot extends LoggedRobot {
     // This must be called from the robot's periodic block in order for anything in
     // the Command-based framework to work.
     VirtualSubsystem.periodicAll();
-    RobotState.periodic();
+    robotContainer.robotPeriodic();
     CommandScheduler.getInstance().run();
 
     // Check logging fault

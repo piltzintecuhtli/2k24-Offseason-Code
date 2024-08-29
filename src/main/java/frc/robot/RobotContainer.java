@@ -125,18 +125,6 @@ public class RobotContainer {
     autoChooser = new LoggedDashboardChooser<>("Auto Routines");
     autoChooser.addDefaultOption("None", AutoRoutines.none());
 
-    // Configure RobotState
-    new RobotState(
-        drive::getRotation,
-        drive::getYawVelocity,
-        drive::getFieldRelativeVelocity,
-        drive::getModulePositions,
-        vision::getCameras,
-        vision::getValidTarget,
-        vision::getPrimaryVisionPoses,
-        vision::getSecondaryVisionPoses,
-        vision::getFrameTimestamps);
-
     // Configure the button bindings
     configureButtonBindings();
 
@@ -160,6 +148,10 @@ public class RobotContainer {
         DriveCommands.joystickDrive(
             drive, () -> -driver.getLeftY(), () -> -driver.getLeftX(), () -> -driver.getRightX()));
     driver.y().onTrue(CompositeCommands.resetHeading(drive));
+  }
+
+  public void robotPeriodic() {
+    RobotState.periodic(drive.getRotation(), drive.getYawVelocity(), drive.getFieldRelativeVelocity(), drive.getModulePositions(), vision.getCameras(), vision.getValidTarget(), vision.getPrimaryVisionPoses(), vision.getSecondaryVisionPoses(), vision.getFrameTimestamps());
   }
 
   public Command getAutonomousCommand() {
