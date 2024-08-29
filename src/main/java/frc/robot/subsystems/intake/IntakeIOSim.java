@@ -1,5 +1,48 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import frc.robot.Constants;
+
+
 public class IntakeIOSim implements IntakeIO {
+  private final DCMotorSim topMotorSim;
+  private final DCMotorSim bottomMotorSim;
+
+  private double topAppliedVolts = 0.0;
+  private double bottomAppliedVolts = 0.0;
+
+  public IntakeIOSim() {
+    topMotorSim = new DCMotorSim(IntakeConstants.TOP_MOTOR, IntakeConstants.GEAR_RATIO, 0.004);
+    bottomMotorSim = new DCMotorSim(IntakeConstants.BOTTOM_MOTOR, IntakeConstants.GEAR_RATIO, 0.004);
+  }
+
+  @Override
+  public void updateInputs(IntakeIOInputs inputs) {
+    topMotorSim.update(Constants.LOOP_PERIOD_SECS);
+    bottomMotorSim.update(Constants.LOOP_PERIOD_SECS);
+
+    inputs.topPosition = Rotation2d.fromRadians(topMotorSim.getAngularPositionRad());
+    inputs.topVelocityRadPerSec = topMotorSim.getAngularVelocityRadPerSec();
+    inputs.topAppliedVolts = topAppliedVolts;
+    inputs.topCurrentAmps = topMotorSim.getCurrentDrawAmps();
+
+    inputs.bottomPosition = Rotation2d.fromRadians(bottomMotorSim.getAngularPositionRad());
+    inputs.bottomVelocityRadPerSec = bottomMotorSim.getAngularVelocityRadPerSec();
+    inputs.bottomAppliedVolts = bottomAppliedVolts;
+    inputs.bottomCurrentAmps = bottomMotorSim.getCurrentDrawAmps();
+  }
   
+  @Override
+  public void setTopVoltage(double volts) {
+    topAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+    topMotorSim.setInputVoltage(topAppliedVolts);
+  }
+  
+  @Override
+  public void setBottomVoltage(double volts) {
+    bottomAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+    bottomMotorSim.setInputVoltage(bottomAppliedVolts);
+  }
 }

@@ -13,15 +13,6 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.pathfinding.Pathfinding;
-import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
-import com.pathplanner.lib.util.PathPlannerLogging;
-import com.pathplanner.lib.util.ReplanningConfig;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.Mode;
@@ -29,21 +20,23 @@ import frc.robot.commands.AutoRoutines;
 import frc.robot.commands.CompositeCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.drive.Drive;
-import frc.robot.subsystems.drive.drive.DriveConstants;
 import frc.robot.subsystems.drive.gyro.GyroIO;
 import frc.robot.subsystems.drive.gyro.GyroIOPigeon2;
 import frc.robot.subsystems.drive.module.ModuleIO;
 import frc.robot.subsystems.drive.module.ModuleIOSim;
 import frc.robot.subsystems.drive.module.ModuleIOTalonFX;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.vision.CameraConstants.RobotCameras;
 import frc.robot.subsystems.vision.Vision;
-import frc.robot.util.LocalADStarAK;
-import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
   // Subsystems
   private Drive drive;
+  private Intake intake;
   private Vision vision;
 
   // Controller
@@ -66,6 +59,7 @@ public class RobotContainer {
                   new ModuleIOTalonFX(1),
                   new ModuleIOTalonFX(2),
                   new ModuleIOTalonFX(3));
+          intake = new Intake(new IntakeIOTalonFX());
           vision =
               new Vision(RobotCameras.LIMELIGHT_LEFT_ARDUCAM, RobotCameras.LIMELIGHT_RIGHT_ARDUCAM);
 
@@ -78,48 +72,32 @@ public class RobotContainer {
                   new ModuleIOSim(),
                   new ModuleIOSim(),
                   new ModuleIOSim());
+          intake = new Intake(new IntakeIOSim());
           vision = new Vision();
       }
     }
 
     // Instantiate missing subsystems
     if (drive == null) {
-      drive =
-          new Drive(
-              new GyroIO() {},
-              new ModuleIO() {},
-              new ModuleIO() {},
-              new ModuleIO() {},
-              new ModuleIO() {});
+      drive = new Drive(
+          new GyroIO() {
+          },
+          new ModuleIO() {
+          },
+          new ModuleIO() {
+          },
+          new ModuleIO() {
+          },
+          new ModuleIO() {
+          });
+    }
+    if (intake == null) {
+      new Intake(new IntakeIO() {
+      });
     }
     if (vision == null) {
       vision = new Vision();
     }
-
-    // Configure autobuilder.
-    AutoBuilder.configureHolonomic(
-        RobotState::getRobotPose,
-        RobotState::resetRobotPose,
-        () -> DriveConstants.KINEMATICS.toChassisSpeeds(drive.getModuleStates()),
-        drive::runVelocity,
-        new HolonomicPathFollowerConfig(
-            DriveConstants.MAX_LINEAR_VELOCITY,
-            DriveConstants.DRIVE_BASE_RADIUS,
-            new ReplanningConfig()),
-        () ->
-            DriverStation.getAlliance().isPresent()
-                && DriverStation.getAlliance().get() == Alliance.Red,
-        drive);
-    Pathfinding.setPathfinder(new LocalADStarAK());
-    PathPlannerLogging.setLogActivePathCallback(
-        (activePath) -> {
-          Logger.recordOutput(
-              "LocalADStarAK/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
-        });
-    PathPlannerLogging.setLogTargetPoseCallback(
-        (targetPose) -> {
-          Logger.recordOutput("LocalADStarAK/Trajectory Setpoint", targetPose);
-        });
 
     // Configure auto choices.
     autoChooser = new LoggedDashboardChooser<>("Auto Routines");
@@ -127,20 +105,6 @@ public class RobotContainer {
 
     // Configure the button bindings
     configureButtonBindings();
-
-    // Configure shuffleboard
-    Shuffleboard.getTab("Autonomous")
-        .add("Autonomous Mode", autoChooser.getSendableChooser())
-        .withPosition(0, 0)
-        .withSize(2, 2);
-    Shuffleboard.getTab("Teleoperated")
-        .addNumber("Hood Offset", RobotState::getSpeakerAngleCompensation)
-        .withPosition(0, 0)
-        .withSize(1, 1);
-    Shuffleboard.getTab("Teleoperated")
-        .addNumber("Flywheel Offset", RobotState::getSpeakerFlywheelCompensation)
-        .withPosition(0, 1)
-        .withSize(1, 1);
   }
 
   private void configureButtonBindings() {
@@ -148,6 +112,9 @@ public class RobotContainer {
         DriveCommands.joystickDrive(
             drive, () -> -driver.getLeftY(), () -> -driver.getLeftX(), () -> -driver.getRightX()));
     driver.y().onTrue(CompositeCommands.resetHeading(drive));
+    driver.leftBumper().whileTrue(intake.intake());
+    driver.rightBumper().whileTrue(intake.eject());
+
   }
 
   public void robotPeriodic() {
