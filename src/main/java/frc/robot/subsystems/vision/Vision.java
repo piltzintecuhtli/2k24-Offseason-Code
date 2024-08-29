@@ -12,7 +12,7 @@ public class Vision extends VirtualSubsystem {
   public Vision(Camera... cameras) {
     this.cameras = cameras;
   }
-  
+
   @Override
   public void periodic() {
     for (Camera camera : cameras) {

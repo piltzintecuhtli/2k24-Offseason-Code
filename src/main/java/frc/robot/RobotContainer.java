@@ -151,7 +151,16 @@ public class RobotContainer {
   }
 
   public void robotPeriodic() {
-    RobotState.periodic(drive.getRotation(), drive.getYawVelocity(), drive.getFieldRelativeVelocity(), drive.getModulePositions(), vision.getCameras(), vision.getValidTarget(), vision.getPrimaryVisionPoses(), vision.getSecondaryVisionPoses(), vision.getFrameTimestamps());
+    RobotState.periodic(
+        drive.getRotation(),
+        drive.getYawVelocity(),
+        drive.getFieldRelativeVelocity(),
+        drive.getModulePositions(),
+        vision.getCameras(),
+        vision.getValidTarget(),
+        vision.getPrimaryVisionPoses(),
+        vision.getSecondaryVisionPoses(),
+        vision.getFrameTimestamps());
   }
 
   public Command getAutonomousCommand() {

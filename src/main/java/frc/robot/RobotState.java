@@ -78,25 +78,22 @@ public class RobotState {
   }
 
   public static void periodic(
-    Rotation2d robotHeading,
-    double robotYawVelocity,
-    Translation2d robotFieldRelativeVelocity,
-    SwerveModulePosition[] modulePositions,
-    Camera[] cameras,
-    boolean targetAquired,
-    Optional<Pose3d>[] visionPrimaryPoses,
-    Optional<Pose3d>[] visionSecondaryPoses,
-    double[] visionFrameTimestamps
-  ) {
+      Rotation2d robotHeading,
+      double robotYawVelocity,
+      Translation2d robotFieldRelativeVelocity,
+      SwerveModulePosition[] modulePositions,
+      Camera[] cameras,
+      boolean targetAquired,
+      Optional<Pose3d>[] visionPrimaryPoses,
+      Optional<Pose3d>[] visionSecondaryPoses,
+      double[] visionFrameTimestamps) {
 
     RobotState.robotHeading = robotHeading;
     RobotState.modulePositions = modulePositions;
 
-    poseEstimator.updateWithTime(
-        Timer.getFPGATimestamp(), robotHeading, modulePositions);
+    poseEstimator.updateWithTime(Timer.getFPGATimestamp(), robotHeading, modulePositions);
 
-        if (targetAquired
-        && robotYawVelocity < Units.degreesToRadians(720.0)) {
+    if (targetAquired && robotYawVelocity < Units.degreesToRadians(720.0)) {
       for (int i = 0; i < visionPrimaryPoses.length; i++) {
         if (visionSecondaryPoses[i].isPresent()) {
           double xyStddev =
@@ -136,15 +133,12 @@ public class RobotState {
         poseEstimator
             .getEstimatedPosition()
             .getTranslation()
-            .plus(
-                robotFieldRelativeVelocity
-                    .times(timeOfFlightMap.get(distanceToSpeaker)));
+            .plus(robotFieldRelativeVelocity.times(timeOfFlightMap.get(distanceToSpeaker)));
     Translation2d effectiveFeedAmpAimingPose =
         poseEstimator
             .getEstimatedPosition()
             .getTranslation()
-            .plus(
-                robotFieldRelativeVelocity.times(timeOfFlightMap.get(distanceToAmp)));
+            .plus(robotFieldRelativeVelocity.times(timeOfFlightMap.get(distanceToAmp)));
     double effectiveDistanceToSpeaker = effectiveSpeakerAimingPose.getDistance(speakerPose);
     double effectiveDistanceToAmp = effectiveFeedAmpAimingPose.getDistance(ampPose);
 
