@@ -119,7 +119,8 @@ public class RobotContainer {
         vision.getValidTarget(),
         vision.getPrimaryVisionPoses(),
         vision.getSecondaryVisionPoses(),
-        vision.getFrameTimestamps());
+        vision.getFrameTimestamps(),
+        intake.hasNote());
   }
 
   public Command getAutonomousCommand() {

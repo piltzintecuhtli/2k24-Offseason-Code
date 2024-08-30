@@ -27,8 +27,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.drive.drive.DriveConstants;
 import frc.robot.subsystems.drive.drive.PhoenixOdometryThread;
-import frc.robot.util.Alert;
-import frc.robot.util.Alert.AlertType;
 import java.util.Queue;
 
 /**
@@ -68,9 +66,7 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final boolean isTurnMotorInverted = true;
   private final Rotation2d absoluteEncoderOffset;
 
-  private final Alert driveDisconnectedAlert;
-  private final Alert turnDisconnectedAlert;
-  private final Alert cancoderDisconnectedAlert;
+  private final VoltageOut voltageOut;
 
   public ModuleIOTalonFX(int index) {
     switch (index) {
@@ -174,38 +170,11 @@ public class ModuleIOTalonFX implements ModuleIO {
     driveTalon.optimizeBusUtilization();
     turnTalon.optimizeBusUtilization();
 
-    String moduleName =
-        switch (index) {
-          case 0 -> "FL";
-          case 1 -> "FR";
-          case 2 -> "BL";
-          case 3 -> "BR";
-          default -> "?";
-        };
-    driveDisconnectedAlert =
-        new Alert(
-            moduleName + " module drive Talon is disconnected, check CAN bus.", AlertType.ERROR);
-    turnDisconnectedAlert =
-        new Alert(
-            moduleName + " module turn Talon is disconnected, check CAN bus.", AlertType.ERROR);
-    cancoderDisconnectedAlert =
-        new Alert(moduleName + " module CANcoder is disconnected, check CAN bus.", AlertType.ERROR);
+    voltageOut = new VoltageOut(0.0);
   }
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
-    boolean driveConnected =
-        BaseStatusSignal.refreshAll(driveVelocity, driveAppliedVolts, driveCurrent, driveTemp)
-            .isOK();
-    boolean turnConnected =
-        BaseStatusSignal.refreshAll(
-                turnPosition, turnVelocity, turnAppliedVolts, turnCurrent, turnTemp)
-            .isOK();
-    boolean cancoderConnected = BaseStatusSignal.refreshAll(turnAbsolutePosition).isOK();
-    driveDisconnectedAlert.set(!driveConnected);
-    turnDisconnectedAlert.set(!turnConnected);
-    cancoderDisconnectedAlert.set(!cancoderConnected);
-
     inputs.drivePosition =
         Rotation2d.fromRotations(
             drivePosition.getValueAsDouble() / ModuleConstants.DRIVE_GEAR_RATIO);
@@ -247,12 +216,12 @@ public class ModuleIOTalonFX implements ModuleIO {
 
   @Override
   public void setDriveVoltage(double volts) {
-    driveTalon.setControl(new VoltageOut(volts));
+    driveTalon.setControl(voltageOut.withOutput(volts));
   }
 
   @Override
   public void setTurnVoltage(double volts) {
-    turnTalon.setControl(new VoltageOut(volts));
+    turnTalon.setControl(voltageOut.withOutput(volts));
   }
 
   @Override

@@ -8,20 +8,26 @@ import frc.robot.Constants;
 public class IntakeIOSim implements IntakeIO {
   private final DCMotorSim topMotorSim;
   private final DCMotorSim bottomMotorSim;
+  private final DCMotorSim acceleratorMotorSim;
 
   private double topAppliedVolts = 0.0;
   private double bottomAppliedVolts = 0.0;
+  private double acceleratorAppliedVolts = 0.0;
 
   public IntakeIOSim() {
-    topMotorSim = new DCMotorSim(IntakeConstants.TOP_MOTOR, IntakeConstants.GEAR_RATIO, 0.004);
+    topMotorSim = new DCMotorSim(IntakeConstants.TOP_MOTOR, IntakeConstants.TOP_GEAR_RATIO, 0.004);
     bottomMotorSim =
-        new DCMotorSim(IntakeConstants.BOTTOM_MOTOR, IntakeConstants.GEAR_RATIO, 0.004);
+        new DCMotorSim(IntakeConstants.BOTTOM_MOTOR, IntakeConstants.TOP_GEAR_RATIO, 0.004);
+    acceleratorMotorSim =
+        new DCMotorSim(
+            IntakeConstants.ACCELERATOR_MOTOR, IntakeConstants.ACCELERATOR_GEAR_RATIO, 0.004);
   }
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
     topMotorSim.update(Constants.LOOP_PERIOD_SECS);
     bottomMotorSim.update(Constants.LOOP_PERIOD_SECS);
+    acceleratorMotorSim.update(Constants.LOOP_PERIOD_SECS);
 
     inputs.topPosition = Rotation2d.fromRadians(topMotorSim.getAngularPositionRad());
     inputs.topVelocityRadPerSec = topMotorSim.getAngularVelocityRadPerSec();
@@ -32,6 +38,12 @@ public class IntakeIOSim implements IntakeIO {
     inputs.bottomVelocityRadPerSec = bottomMotorSim.getAngularVelocityRadPerSec();
     inputs.bottomAppliedVolts = bottomAppliedVolts;
     inputs.bottomCurrentAmps = bottomMotorSim.getCurrentDrawAmps();
+
+    inputs.acceleratorPosition =
+        Rotation2d.fromRadians(acceleratorMotorSim.getAngularPositionRad());
+    inputs.acceleratorVelocityRadPerSec = acceleratorMotorSim.getAngularVelocityRadPerSec();
+    inputs.acceleratorAppliedVolts = acceleratorAppliedVolts;
+    inputs.acceleratorCurrentAmps = acceleratorMotorSim.getCurrentDrawAmps();
   }
 
   @Override
@@ -44,5 +56,11 @@ public class IntakeIOSim implements IntakeIO {
   public void setBottomVoltage(double volts) {
     bottomAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
     bottomMotorSim.setInputVoltage(bottomAppliedVolts);
+  }
+
+  @Override
+  public void setAcceleratorVoltage(double volts) {
+    acceleratorAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+    acceleratorMotorSim.setInputVoltage(acceleratorAppliedVolts);
   }
 }

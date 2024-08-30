@@ -18,7 +18,15 @@ public interface IntakeIO {
     public double bottomCurrentAmps = 0.0;
     public double bottomTemperatureCelsius = 0.0;
 
-    public boolean hasNote = false;
+    public Rotation2d acceleratorPosition = new Rotation2d();
+    public double acceleratorVelocityRadPerSec = 0.0;
+    public double acceleratorAppliedVolts = 0.0;
+    public double acceleratorCurrentAmps = 0.0;
+    public double acceleratorTemperatureCelsius = 0.0;
+
+    public boolean intakeSensor = false;
+    public boolean middleSensor = false;
+    public boolean finalSensor = false;
   }
 
   public default void updateInputs(IntakeIOInputs inputs) {}
@@ -26,4 +34,6 @@ public interface IntakeIO {
   public default void setTopVoltage(double volts) {}
 
   public default void setBottomVoltage(double volts) {}
+
+  public default void setAcceleratorVoltage(double volts) {}
 }
