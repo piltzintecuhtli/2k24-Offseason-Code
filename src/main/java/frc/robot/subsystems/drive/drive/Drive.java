@@ -15,13 +15,11 @@ package frc.robot.subsystems.drive.drive;
 
 import com.ctre.phoenix6.CANBus;
 import edu.wpi.first.math.filter.LinearFilter;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -52,8 +50,6 @@ public class Drive extends SubsystemBase {
         new SwerveModulePosition(),
         new SwerveModulePosition()
       };
-  private SwerveDriveOdometry odometry =
-      new SwerveDriveOdometry(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
 
@@ -76,7 +72,7 @@ public class Drive extends SubsystemBase {
   }
 
   public void periodic() {
-    DriveConstants.ODOMETRY_LOCK.lock(); // Prevents odometry updates while reading data
+    DriveConstants.ODOMETRY_LOCK.lock();
     gyroIO.updateInputs(gyroInputs);
     for (var module : modules) {
       module.updateInputs();
@@ -99,37 +95,30 @@ public class Drive extends SubsystemBase {
       Logger.recordOutput("SwerveStates/Setpoints Optimized", new SwerveModuleState[] {});
     }
 
-    // Update odometry
+    // Update gyro rotation
     double[] sampleTimestamps =
-        modules[0].getOdometryTimestamps(); // All signals are sampled together
+        modules[0].getOdometryTimestamps();
     int sampleCount = sampleTimestamps.length;
     for (int i = 0; i < sampleCount; i++) {
-      // Read wheel positions and deltas from each module
-      SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
-      SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
-      for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
-        modulePositions[moduleIndex] = modules[moduleIndex].getOdometryPositions()[i];
-        moduleDeltas[moduleIndex] =
-            new SwerveModulePosition(
-                modulePositions[moduleIndex].distanceMeters
-                    - lastModulePositions[moduleIndex].distanceMeters,
-                modulePositions[moduleIndex].angle);
-        lastModulePositions[moduleIndex] = modulePositions[moduleIndex];
-      }
-
-      // Update gyro angle
       if (gyroInputs.connected) {
-        // Use the real gyro angle
         rawGyroRotation = gyroInputs.odometryYawPositions[i];
       } else {
         // Use the angle delta from the kinematics and module deltas
+        // Read wheel positions and deltas from each module
+        SwerveModulePosition[] modulePositions = new SwerveModulePosition[4];
+        SwerveModulePosition[] moduleDeltas = new SwerveModulePosition[4];
+        for (int moduleIndex = 0; moduleIndex < 4; moduleIndex++) {
+          modulePositions[moduleIndex] = modules[moduleIndex].getOdometryPositions()[i];
+          moduleDeltas[moduleIndex] = new SwerveModulePosition(
+              modulePositions[moduleIndex].distanceMeters
+                  - lastModulePositions[moduleIndex].distanceMeters,
+              modulePositions[moduleIndex].angle);
+          lastModulePositions[moduleIndex] = modulePositions[moduleIndex];
+        }
         Twist2d twist = kinematics.toTwist2d(moduleDeltas);
         rawGyroRotation = rawGyroRotation.plus(new Rotation2d(twist.dtheta));
       }
-
-      // Apply update
-      odometry.update(rawGyroRotation, modulePositions);
-
+      
       ChassisSpeeds chassisSpeeds = kinematics.toChassisSpeeds(getModuleStates());
       Translation2d rawFieldRelativeVelocity =
           new Translation2d(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond)
@@ -227,25 +216,14 @@ public class Drive extends SubsystemBase {
     return new Translation2d(filteredX, filteredY);
   }
 
-  /** Returns the current odometry pose. */
-  @AutoLogOutput(key = "Odometry/Robot")
-  public Pose2d getPose() {
-    return odometry.getPoseMeters();
-  }
-
   /** Returns the current odometry rotation. */
   public Rotation2d getRotation() {
-    return getPose().getRotation();
+    return rawGyroRotation;
   }
 
   /** Returns the current yaw velocity */
   public double getYawVelocity() {
     return gyroInputs.yawVelocityRadPerSec;
-  }
-
-  /** Resets the current odometry pose. */
-  public void setPose(Pose2d pose) {
-    odometry.resetPosition(rawGyroRotation, getModulePositions(), pose);
   }
 
   /** Returns an array of module translations. */

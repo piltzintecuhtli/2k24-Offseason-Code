@@ -19,10 +19,6 @@ public class CompositeCommands {
   public static final Command resetHeading(Drive drive) {
     return Commands.runOnce(
             () -> {
-              drive.setPose(
-                  new Pose2d(
-                      RobotState.getRobotPose().getTranslation(),
-                      AllianceFlipUtil.apply(new Rotation2d())));
               RobotState.resetRobotPose(
                   new Pose2d(
                       RobotState.getRobotPose().getTranslation(),
@@ -35,8 +31,6 @@ public class CompositeCommands {
     return Commands.sequence(
         Commands.runOnce(
             () -> {
-              drive.setPose(
-                  AllianceFlipUtil.apply(Choreo.getTrajectory(trajectory).getInitialPose()));
               RobotState.resetRobotPose(
                   AllianceFlipUtil.apply(Choreo.getTrajectory(trajectory).getInitialPose()));
             }),
