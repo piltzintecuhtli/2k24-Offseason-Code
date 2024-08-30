@@ -5,7 +5,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants;
 
-
 public class IntakeIOSim implements IntakeIO {
   private final DCMotorSim topMotorSim;
   private final DCMotorSim bottomMotorSim;
@@ -15,7 +14,8 @@ public class IntakeIOSim implements IntakeIO {
 
   public IntakeIOSim() {
     topMotorSim = new DCMotorSim(IntakeConstants.TOP_MOTOR, IntakeConstants.GEAR_RATIO, 0.004);
-    bottomMotorSim = new DCMotorSim(IntakeConstants.BOTTOM_MOTOR, IntakeConstants.GEAR_RATIO, 0.004);
+    bottomMotorSim =
+        new DCMotorSim(IntakeConstants.BOTTOM_MOTOR, IntakeConstants.GEAR_RATIO, 0.004);
   }
 
   @Override
@@ -33,13 +33,13 @@ public class IntakeIOSim implements IntakeIO {
     inputs.bottomAppliedVolts = bottomAppliedVolts;
     inputs.bottomCurrentAmps = bottomMotorSim.getCurrentDrawAmps();
   }
-  
+
   @Override
   public void setTopVoltage(double volts) {
     topAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
     topMotorSim.setInputVoltage(topAppliedVolts);
   }
-  
+
   @Override
   public void setBottomVoltage(double volts) {
     bottomAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);

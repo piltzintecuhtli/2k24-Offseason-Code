@@ -11,11 +11,10 @@ public class IntakeConstants {
   public static final DCMotor TOP_MOTOR;
   public static final DCMotor BOTTOM_MOTOR;
   public static final double GEAR_RATIO;
-  
+
   static {
     switch (Constants.ROBOT) {
       case ROBOT_KRAKEN_X60:
-      case ROBOT_KRAKEN_X60_FOC:
       case ROBOT_SIM:
       default:
         TOP_CAN_ID = 1;
@@ -24,7 +23,7 @@ public class IntakeConstants {
         CURRENT_LIMIT = 40.0;
         TOP_MOTOR = DCMotor.getKrakenX60(1);
         BOTTOM_MOTOR = DCMotor.getKrakenX60(1);
-            GEAR_RATIO = 1.0;
+        GEAR_RATIO = 1.0;
         break;
     }
   }

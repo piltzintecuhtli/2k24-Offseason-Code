@@ -76,7 +76,6 @@ public final class DriveConstants {
     ODOMETRY_LOCK = new ReentrantLock();
     switch (Constants.ROBOT) {
       case ROBOT_KRAKEN_X60:
-      case ROBOT_KRAKEN_X60_FOC:
         AUTO_AIM_KP.initDefault(6.0);
         AUTO_AIM_KD.initDefault(0.002);
         AUTO_X_KP.initDefault(1.0);

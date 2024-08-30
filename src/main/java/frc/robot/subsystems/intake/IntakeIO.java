@@ -1,8 +1,7 @@
 package frc.robot.subsystems.intake;
 
-import org.littletonrobotics.junction.AutoLog;
-
 import edu.wpi.first.math.geometry.Rotation2d;
+import org.littletonrobotics.junction.AutoLog;
 
 public interface IntakeIO {
   @AutoLog
@@ -22,11 +21,9 @@ public interface IntakeIO {
     public boolean hasNote = false;
   }
 
-  public default void updateInputs(IntakeIOInputs inputs) {
-  }
+  public default void updateInputs(IntakeIOInputs inputs) {}
 
-  public default void setTopVoltage(double volts) {
-  }
+  public default void setTopVoltage(double volts) {}
 
   public default void setBottomVoltage(double volts) {}
 }

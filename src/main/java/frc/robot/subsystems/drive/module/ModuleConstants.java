@@ -52,7 +52,6 @@ public class ModuleConstants {
     TURN_MOMENT_OF_INERTIA = 0.004;
     switch (Constants.ROBOT) {
       case ROBOT_KRAKEN_X60:
-      case ROBOT_KRAKEN_X60_FOC:
         WHEEL_RADIUS.initDefault(Units.inchesToMeters(2.0));
         DRIVE_KS.initDefault(0.063566);
         DRIVE_KV.initDefault(0.11799);

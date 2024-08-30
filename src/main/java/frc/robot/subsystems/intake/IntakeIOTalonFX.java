@@ -6,7 +6,6 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -71,13 +70,15 @@ public class IntakeIOTalonFX implements IntakeIO {
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
     inputs.topPosition = Rotation2d.fromRotations(topPositionRotations.getValueAsDouble());
-    inputs.topVelocityRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(topVelocityRotPerSec.getValueAsDouble());
+    inputs.topVelocityRadPerSec =
+        Units.rotationsPerMinuteToRadiansPerSecond(topVelocityRotPerSec.getValueAsDouble());
     inputs.topAppliedVolts = topAppliedVolts.getValueAsDouble();
     inputs.topCurrentAmps = topCurrentAmps.getValueAsDouble();
     inputs.topTemperatureCelsius = topTemperatureCelsius.getValueAsDouble();
 
     inputs.bottomPosition = Rotation2d.fromRotations(bottomPositionRotations.getValueAsDouble());
-    inputs.bottomVelocityRadPerSec = Units.rotationsPerMinuteToRadiansPerSecond(bottomCurrentAmps.getValueAsDouble());
+    inputs.bottomVelocityRadPerSec =
+        Units.rotationsPerMinuteToRadiansPerSecond(bottomCurrentAmps.getValueAsDouble());
     inputs.bottomAppliedVolts = bottomAppliedVolts.getValueAsDouble();
     inputs.bottomCurrentAmps = bottomCurrentAmps.getValueAsDouble();
     inputs.bottomTemperatureCelsius = bottomTemperatureCelsius.getValueAsDouble();

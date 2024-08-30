@@ -50,8 +50,6 @@ public class RobotContainer {
     if (Constants.getMode() != Mode.REPLAY) {
       switch (Constants.ROBOT) {
         case ROBOT_KRAKEN_X60:
-        case ROBOT_KRAKEN_X60_FOC:
-          // Snapback, instantiate hardware IO implementations
           drive =
               new Drive(
                   new GyroIOPigeon2(),
@@ -62,7 +60,6 @@ public class RobotContainer {
           intake = new Intake(new IntakeIOTalonFX());
           vision =
               new Vision(RobotCameras.LIMELIGHT_LEFT_ARDUCAM, RobotCameras.LIMELIGHT_RIGHT_ARDUCAM);
-
           break;
         case ROBOT_SIM:
           drive =
@@ -74,26 +71,22 @@ public class RobotContainer {
                   new ModuleIOSim());
           intake = new Intake(new IntakeIOSim());
           vision = new Vision();
+          break;
       }
     }
 
     // Instantiate missing subsystems
     if (drive == null) {
-      drive = new Drive(
-          new GyroIO() {
-          },
-          new ModuleIO() {
-          },
-          new ModuleIO() {
-          },
-          new ModuleIO() {
-          },
-          new ModuleIO() {
-          });
+      drive =
+          new Drive(
+              new GyroIO() {},
+              new ModuleIO() {},
+              new ModuleIO() {},
+              new ModuleIO() {},
+              new ModuleIO() {});
     }
     if (intake == null) {
-      new Intake(new IntakeIO() {
-      });
+      intake = new Intake(new IntakeIO() {});
     }
     if (vision == null) {
       vision = new Vision();
@@ -114,7 +107,6 @@ public class RobotContainer {
     driver.y().onTrue(CompositeCommands.resetHeading(drive));
     driver.leftBumper().whileTrue(intake.intake());
     driver.rightBumper().whileTrue(intake.eject());
-
   }
 
   public void robotPeriodic() {
