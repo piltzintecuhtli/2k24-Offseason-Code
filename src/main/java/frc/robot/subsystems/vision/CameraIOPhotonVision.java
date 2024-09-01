@@ -60,8 +60,8 @@ public class CameraIOPhotonVision implements CameraIO {
       inputs.targetAquired = true;
       inputs.totalTargets = result.getTargets().size();
       inputs.frameTimestamp = result.getTimestampSeconds();
-        inputs.xOffset = Rotation2d.fromDegrees(result.getBestTarget().getYaw());
-        inputs.yOffset = Rotation2d.fromDegrees(result.getBestTarget().getPitch());
+      inputs.xOffset = Rotation2d.fromDegrees(result.getBestTarget().getYaw());
+      inputs.yOffset = Rotation2d.fromDegrees(result.getBestTarget().getPitch());
       Optional<EstimatedRobotPose> primaryEstimatedPose = primaryPhotonPoseEstimator.update(result);
       Optional<EstimatedRobotPose> secondaryEstimatedPose =
           secondaryPhotonPoseEstimator.update(result);

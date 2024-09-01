@@ -25,8 +25,8 @@ public class CameraIOLimelight implements CameraIO {
 
   @Override
   public void updateInputs(CameraIOInputs inputs) {
-      inputs.xOffset = Rotation2d.fromDegrees(LimelightHelpers.getTX(name));
-      inputs.yOffset = Rotation2d.fromDegrees(LimelightHelpers.getTY(name));
+    inputs.xOffset = Rotation2d.fromDegrees(LimelightHelpers.getTX(name));
+    inputs.yOffset = Rotation2d.fromDegrees(LimelightHelpers.getTY(name));
     inputs.targetAquired = LimelightHelpers.getTV(name);
     inputs.totalTargets = LimelightHelpers.getTargetCount(name);
     inputs.averageDistance = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name).avgTagDist;

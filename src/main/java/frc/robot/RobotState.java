@@ -58,9 +58,9 @@ public class RobotState {
 
     // Units: seconds
     timeOfFlightMap.put(0.0, 0.0);
-  }
 
-  public RobotState() {
+    modulePositions = new SwerveModulePosition[4];
+
     for (int i = 0; i < modulePositions.length; i++) {
       modulePositions[i] = new SwerveModulePosition();
     }
@@ -74,6 +74,8 @@ public class RobotState {
             DriveConstants.ODOMETRY_STANDARD_DEVIATIONS,
             VecBuilder.fill(0.0, 0.0, 0.0));
   }
+
+  public RobotState() {}
 
   public static void periodic(
       Rotation2d robotHeading,
