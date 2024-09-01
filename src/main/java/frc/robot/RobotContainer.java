@@ -29,7 +29,6 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOTalonFX;
-import frc.robot.subsystems.vision.CameraConstants.RobotCameras;
 import frc.robot.subsystems.vision.Vision;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -58,8 +57,7 @@ public class RobotContainer {
                   new ModuleIOTalonFX(2),
                   new ModuleIOTalonFX(3));
           intake = new Intake(new IntakeIOTalonFX());
-          vision =
-              new Vision(RobotCameras.LIMELIGHT_LEFT_ARDUCAM, RobotCameras.LIMELIGHT_RIGHT_ARDUCAM);
+          vision = new Vision();
           break;
         case ROBOT_SIM:
           drive =
