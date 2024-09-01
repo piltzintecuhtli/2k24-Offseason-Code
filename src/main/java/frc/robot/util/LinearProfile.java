@@ -63,7 +63,7 @@ public class LinearProfile {
    * @return Setpoint to send to motors
    */
   public double calculateSetpoint() {
-    if (EqualsUtil.epsilonEquals(goal, currentSetpoint)) {
+    if (epsilonEquals(goal, currentSetpoint)) {
       return currentSetpoint;
     }
     if (goal > currentSetpoint) {
@@ -78,5 +78,13 @@ public class LinearProfile {
       }
     }
     return currentSetpoint;
+  }
+
+  public static boolean epsilonEquals(double a, double b, double epsilon) {
+    return (a - epsilon <= b) && (a + epsilon >= b);
+  }
+
+  public static boolean epsilonEquals(double a, double b) {
+    return epsilonEquals(a, b, 1e-9);
   }
 }

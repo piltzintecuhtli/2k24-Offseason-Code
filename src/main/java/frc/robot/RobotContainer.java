@@ -122,6 +122,6 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return AutoRoutines.ampSideSixPiece(drive);
+    return AutoRoutines.none();
   }
 }

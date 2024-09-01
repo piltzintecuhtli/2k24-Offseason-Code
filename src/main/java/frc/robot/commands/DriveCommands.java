@@ -16,7 +16,6 @@ package frc.robot.commands;
 import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -28,12 +27,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
-import frc.robot.Constants;
-import frc.robot.FieldConstants;
-import frc.robot.RobotState;
 import frc.robot.subsystems.drive.drive.Drive;
 import frc.robot.subsystems.drive.drive.DriveConstants;
-import frc.robot.util.TrackingMode;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -91,93 +86,6 @@ public final class DriveCommands {
           drive.runVelocity(chassisSpeeds);
         },
         drive);
-  }
-
-  public static final Command moveTowardsTarget(
-      Drive drive, double blueXCoord, Pose2d targetPose, TrackingMode targetType) {
-
-    @SuppressWarnings({"resource"})
-    PIDController aimController =
-        new PIDController(
-            DriveConstants.AUTO_AIM_KP.get(),
-            0,
-            DriveConstants.AUTO_AIM_KD.get(),
-            Constants.LOOP_PERIOD_SECS);
-    aimController.enableContinuousInput(-Math.PI, Math.PI);
-
-    DoubleSupplier targetXCoord =
-        () -> {
-          boolean isRed =
-              DriverStation.getAlliance().isPresent()
-                  && DriverStation.getAlliance().get().equals(Alliance.Red);
-          return isRed ? FieldConstants.fieldLength - blueXCoord : blueXCoord;
-        };
-
-    return Commands.run(
-            () -> {
-              // Configure PID
-              aimController.setD(DriveConstants.AUTO_AIM_KD.get());
-              aimController.setP(DriveConstants.AUTO_AIM_KP.get());
-
-              boolean isRed =
-                  DriverStation.getAlliance().isPresent()
-                      && DriverStation.getAlliance().get().equals(Alliance.Red);
-
-              // Convert to field relative speeds & send command
-              Rotation2d targetGyroOffset =
-                  Rotation2d.fromRadians(
-                      Math.atan2(
-                          targetPose.getY() - RobotState.getRobotPose().getY(),
-                          targetPose.getX() - RobotState.getRobotPose().getX()));
-              ;
-              double distanceT =
-                  MathUtil.clamp(
-                      Math.abs(RobotState.getRobotPose().getX() - targetXCoord.getAsDouble())
-                          / DriveConstants.AUTO_AIM_X_VEL_RANGE.get(),
-                      0.0,
-                      1.0);
-              double speed =
-                  MathUtil.interpolate(
-                      DriveConstants.AUTO_AIM_X_VEL_MIN.get(),
-                      DriveConstants.AUTO_AIM_X_VEL_MAX.get(),
-                      distanceT);
-              drive.runVelocity(
-                  new ChassisSpeeds(
-                      targetType.equals(TrackingMode.APRILTAGS) ? speed : -speed,
-                      0,
-                      aimController.calculate(
-                          RobotState.getRobotPose().getRotation().getRadians(),
-                          targetPose
-                              .getRotation()
-                              .plus(
-                                  targetType.equals(TrackingMode.APRILTAGS)
-                                      ? isRed
-                                          ? targetGyroOffset
-                                          : targetGyroOffset.plus(Rotation2d.fromRadians(Math.PI))
-                                      : isRed
-                                          ? targetGyroOffset.plus(Rotation2d.fromRadians(Math.PI))
-                                          : targetGyroOffset)
-                              .getRadians())));
-            },
-            drive)
-        .until(
-            () -> {
-              boolean endAboveTargetXCoord;
-              boolean isRed =
-                  DriverStation.getAlliance().isPresent()
-                      && DriverStation.getAlliance().get().equals(Alliance.Red);
-              if (isRed) {
-                endAboveTargetXCoord = targetType.equals(TrackingMode.APRILTAGS);
-              } else {
-                endAboveTargetXCoord = targetType.equals(TrackingMode.NOTES);
-              }
-              if (endAboveTargetXCoord) {
-                return RobotState.getRobotPose().getX() > targetXCoord.getAsDouble();
-              } else {
-                return RobotState.getRobotPose().getX() < targetXCoord.getAsDouble();
-              }
-            })
-        .finallyDo(() -> drive.stop());
   }
 
   public static final Command stop(Drive drive) {
