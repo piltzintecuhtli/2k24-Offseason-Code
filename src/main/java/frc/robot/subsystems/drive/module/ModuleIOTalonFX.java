@@ -100,14 +100,12 @@ public class ModuleIOTalonFX implements ModuleIO {
     driveConfig = new TalonFXConfiguration();
     driveConfig.CurrentLimits.SupplyCurrentLimit = ModuleConstants.DRIVE_CURRENT_LIMIT;
     driveConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-
     driveTalon.getConfigurator().apply(driveConfig);
     setDriveBrakeMode(true);
 
     turnConfig = new TalonFXConfiguration();
     turnConfig.CurrentLimits.SupplyCurrentLimit = ModuleConstants.TURN_CURRENT_LIMIT;
     turnConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-
     turnTalon.getConfigurator().apply(turnConfig);
     setTurnBrakeMode(true);
 

@@ -23,6 +23,7 @@ public final class Constants {
   public static Mode getMode() {
     switch (ROBOT) {
       case ROBOT_KRAKEN_X60:
+      case ROBOT_KRAKEN_X60_PRO:
         return RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
 
       case ROBOT_SIM:
@@ -41,6 +42,7 @@ public final class Constants {
 
   public static enum RobotType {
     ROBOT_KRAKEN_X60,
+    ROBOT_KRAKEN_X60_PRO,
     ROBOT_SIM,
   }
 

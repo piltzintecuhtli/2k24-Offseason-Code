@@ -26,10 +26,12 @@ import frc.robot.subsystems.drive.module.ModuleConstants;
 import frc.robot.subsystems.drive.module.ModuleIO;
 import frc.robot.subsystems.drive.module.ModuleIOSim;
 import frc.robot.subsystems.drive.module.ModuleIOTalonFX;
+import frc.robot.subsystems.drive.module.ModuleIOTalonFXPRO;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOTalonFX;
+import frc.robot.subsystems.intake.IntakeIOTalonFXPRO;
 import frc.robot.subsystems.vision.Vision;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -60,6 +62,16 @@ public class RobotContainer {
           intake = new Intake(new IntakeIOTalonFX());
           vision = new Vision();
           break;
+        case ROBOT_KRAKEN_X60_PRO:
+          drive =
+              new Drive(
+                  new GyroIOPigeon2(),
+                  new ModuleIOTalonFXPRO(ModuleConstants.FRONT_LEFT),
+                  new ModuleIOTalonFXPRO(ModuleConstants.FRONT_RIGHT),
+                  new ModuleIOTalonFXPRO(ModuleConstants.REAR_LEFT),
+                  new ModuleIOTalonFXPRO(ModuleConstants.REAR_RIGHT));
+          intake = new Intake(new IntakeIOTalonFXPRO());
+          vision = new Vision();
         case ROBOT_SIM:
           drive =
               new Drive(
