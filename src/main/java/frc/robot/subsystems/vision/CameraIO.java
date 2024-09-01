@@ -79,7 +79,5 @@ public interface CameraIO {
     return 0.0;
   }
 
-  public default void setCameraMode(CameraMode cameraMode) {}
-
   public default void setPipeline(int pipeline) {}
 }

@@ -4,7 +4,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.util.LimelightHelpers;
 import lombok.Getter;
-import lombok.Setter;
 
 public class CameraIOLimelight implements CameraIO {
   private final String name;
@@ -13,9 +12,8 @@ public class CameraIOLimelight implements CameraIO {
   @Getter private final double verticalFOV;
   @Getter private final double primaryXYStandardDeviationCoefficient;
   @Getter private final double secondaryXYStandardDeviationCoefficient;
-  @Setter private CameraMode cameraMode;
 
-  public CameraIOLimelight(String name, CameraType cameraType, CameraMode cameraMode) {
+  public CameraIOLimelight(String name, CameraType cameraType) {
     this.name = "limelight-" + name;
     this.cameraType = cameraType;
     this.horizontalFOV = cameraType.horizontalFOV;
@@ -23,15 +21,12 @@ public class CameraIOLimelight implements CameraIO {
     this.primaryXYStandardDeviationCoefficient = cameraType.primaryXYStandardDeviationCoefficient;
     this.secondaryXYStandardDeviationCoefficient =
         cameraType.secondaryXYStandardDeviationCoefficient;
-    this.cameraMode = cameraMode;
   }
 
   @Override
   public void updateInputs(CameraIOInputs inputs) {
-    if (cameraMode.equals(CameraMode.NOTES)) {
       inputs.xOffset = Rotation2d.fromDegrees(LimelightHelpers.getTX(name));
       inputs.yOffset = Rotation2d.fromDegrees(LimelightHelpers.getTY(name));
-    }
     inputs.targetAquired = LimelightHelpers.getTV(name);
     inputs.totalTargets = LimelightHelpers.getTargetCount(name);
     inputs.averageDistance = LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(name).avgTagDist;

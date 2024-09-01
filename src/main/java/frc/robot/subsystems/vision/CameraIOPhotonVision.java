@@ -6,7 +6,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import java.util.Optional;
 import lombok.Getter;
-import lombok.Setter;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -23,7 +22,6 @@ public class CameraIOPhotonVision implements CameraIO {
   @Getter private final double verticalFOV;
   @Getter private final double primaryXYStandardDeviationCoefficient;
   @Getter private final double secondaryXYStandardDeviationCoefficient;
-  @Setter private CameraMode cameraMode;
 
   @Getter private Rotation2d xOffset;
   @Getter private Rotation2d yOffset;
@@ -40,8 +38,7 @@ public class CameraIOPhotonVision implements CameraIO {
       AprilTagFieldLayout aprilTagFieldLayout,
       Transform3d robotToCamera,
       PoseStrategy primaryStrategy,
-      PoseStrategy secondaryStrategy,
-      CameraMode cameraMode) {
+      PoseStrategy secondaryStrategy) {
     camera = new PhotonCamera(cameraName);
     this.cameraType = cameraType;
     this.primaryPhotonPoseEstimator =
@@ -53,7 +50,6 @@ public class CameraIOPhotonVision implements CameraIO {
     this.primaryXYStandardDeviationCoefficient = cameraType.primaryXYStandardDeviationCoefficient;
     this.secondaryXYStandardDeviationCoefficient =
         cameraType.secondaryXYStandardDeviationCoefficient;
-    this.cameraMode = cameraMode;
   }
 
   @Override
@@ -64,10 +60,8 @@ public class CameraIOPhotonVision implements CameraIO {
       inputs.targetAquired = true;
       inputs.totalTargets = result.getTargets().size();
       inputs.frameTimestamp = result.getTimestampSeconds();
-      if (cameraMode.equals(CameraMode.NOTES)) {
         inputs.xOffset = Rotation2d.fromDegrees(result.getBestTarget().getYaw());
         inputs.yOffset = Rotation2d.fromDegrees(result.getBestTarget().getPitch());
-      }
       Optional<EstimatedRobotPose> primaryEstimatedPose = primaryPhotonPoseEstimator.update(result);
       Optional<EstimatedRobotPose> secondaryEstimatedPose =
           secondaryPhotonPoseEstimator.update(result);

@@ -94,7 +94,7 @@ public class RobotState {
 
     if (targetAquired && robotYawVelocity < Units.degreesToRadians(720.0)) {
       for (int i = 0; i < visionPrimaryPoses.length; i++) {
-        if (visionSecondaryPoses[i].isPresent()) {
+        if (visionPrimaryPoses[i].isPresent()) {
           double xyStddev =
               cameras[i].getPrimaryXYStandardDeviationCoefficient()
                   * Math.pow(cameras[i].getAverageDistance(), 2.0)
