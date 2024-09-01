@@ -22,6 +22,7 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.drive.Drive;
 import frc.robot.subsystems.drive.gyro.GyroIO;
 import frc.robot.subsystems.drive.gyro.GyroIOPigeon2;
+import frc.robot.subsystems.drive.module.ModuleConstants;
 import frc.robot.subsystems.drive.module.ModuleIO;
 import frc.robot.subsystems.drive.module.ModuleIOSim;
 import frc.robot.subsystems.drive.module.ModuleIOTalonFX;
@@ -52,10 +53,10 @@ public class RobotContainer {
           drive =
               new Drive(
                   new GyroIOPigeon2(),
-                  new ModuleIOTalonFX(0),
-                  new ModuleIOTalonFX(1),
-                  new ModuleIOTalonFX(2),
-                  new ModuleIOTalonFX(3));
+                  new ModuleIOTalonFX(ModuleConstants.FRONT_LEFT),
+                  new ModuleIOTalonFX(ModuleConstants.FRONT_RIGHT),
+                  new ModuleIOTalonFX(ModuleConstants.REAR_LEFT),
+                  new ModuleIOTalonFX(ModuleConstants.REAR_RIGHT));
           intake = new Intake(new IntakeIOTalonFX());
           vision = new Vision();
           break;

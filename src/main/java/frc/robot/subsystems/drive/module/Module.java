@@ -13,12 +13,10 @@
 
 package frc.robot.subsystems.drive.module;
 
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import frc.robot.Constants;
 import frc.robot.util.Alert;
 import frc.robot.util.Alert.AlertType;
 import org.littletonrobotics.junction.Logger;
@@ -27,18 +25,6 @@ public class Module {
   private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
   private SimpleMotorFeedforward driveFeedforward =
       new SimpleMotorFeedforward(ModuleConstants.DRIVE_KS.get(), ModuleConstants.DRIVE_KV.get());
-  private final PIDController driveFeedback =
-      new PIDController(
-          ModuleConstants.DRIVE_KP.get(),
-          0.0,
-          ModuleConstants.DRIVE_KD.get(),
-          Constants.LOOP_PERIOD_SECS);
-  private final PIDController turnFeedback =
-      new PIDController(
-          ModuleConstants.TURN_KP.get(),
-          0.0,
-          ModuleConstants.TURN_KD.get(),
-          Constants.LOOP_PERIOD_SECS);
   private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[] {};
   private Rotation2d angleSetpoint = null; // Setpoint for closed loop control, null for open loop
   private Double speedSetpoint = null; // Setpoint for closed loop control, null for open loop
@@ -55,7 +41,6 @@ public class Module {
     this.io = io;
     this.index = index;
 
-    turnFeedback.enableContinuousInput(-Math.PI, Math.PI);
     setBrakeMode(true);
 
     String moduleName =
@@ -90,17 +75,13 @@ public class Module {
           new SimpleMotorFeedforward(
               ModuleConstants.DRIVE_KS.get(), ModuleConstants.DRIVE_KV.get());
     }
-    if (ModuleConstants.DRIVE_KP.hasChanged(hashCode())) {
-      driveFeedback.setP(ModuleConstants.DRIVE_KP.get());
+    if (ModuleConstants.DRIVE_KP.hasChanged(hashCode())
+        || ModuleConstants.DRIVE_KD.hasChanged(hashCode())) {
+      io.setDrivePID(ModuleConstants.DRIVE_KP.get(), 0.0, ModuleConstants.DRIVE_KD.get());
     }
-    if (ModuleConstants.DRIVE_KD.hasChanged(hashCode())) {
-      driveFeedback.setD(ModuleConstants.DRIVE_KD.get());
-    }
-    if (ModuleConstants.TURN_KP.hasChanged(hashCode())) {
-      turnFeedback.setP(ModuleConstants.TURN_KP.get());
-    }
-    if (ModuleConstants.TURN_KD.hasChanged(hashCode())) {
-      turnFeedback.setD(ModuleConstants.TURN_KD.get());
+    if (ModuleConstants.TURN_KP.hasChanged(hashCode())
+        || ModuleConstants.TURN_KD.hasChanged(hashCode())) {
+      io.setTurnPID(ModuleConstants.TURN_KP.get(), 0.0, ModuleConstants.TURN_KD.get());
     }
 
     // On first cycle, reset relative turn encoder
@@ -122,8 +103,7 @@ public class Module {
 
     // Run closed loop turn control
     if (angleSetpoint != null) {
-      io.setTurnVoltage(
-          turnFeedback.calculate(getAngle().getRadians(), angleSetpoint.getRadians()));
+      io.setTurnPositionSetpoint(angleSetpoint);
 
       // Run closed loop drive control
       // Only allowed if closed loop turn control is running
@@ -132,13 +112,12 @@ public class Module {
         // When the error is 90 degrees, the velocity setpoint should be 0. As the wheel turns
         // towards the setpoint, its velocity should increase. This is achieved by
         // taking the component of the velocity in the direction of the setpoint.
-        double adjustSpeedSetpoint = speedSetpoint * Math.cos(turnFeedback.getPositionError());
+        double adjustSpeedSetpoint = speedSetpoint * Math.cos(inputs.turnPositionError);
 
         // Run drive controller
         double velocityRadPerSec = adjustSpeedSetpoint / ModuleConstants.WHEEL_RADIUS.get();
-        io.setDriveVoltage(
-            driveFeedforward.calculate(velocityRadPerSec)
-                + driveFeedback.calculate(inputs.driveVelocityRadPerSec, velocityRadPerSec));
+        io.setDriveVelocitySetpoint(
+            velocityRadPerSec, driveFeedforward.calculate(velocityRadPerSec));
       }
     }
 
@@ -180,8 +159,7 @@ public class Module {
 
   /** Disables all outputs to motors. */
   public void stop() {
-    io.setTurnVoltage(0.0);
-    io.setDriveVoltage(0.0);
+    io.stop();
 
     // Disable closed loop control for turn and drive
     angleSetpoint = null;

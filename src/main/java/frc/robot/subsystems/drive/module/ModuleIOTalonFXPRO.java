@@ -33,7 +33,7 @@ import frc.robot.subsystems.drive.drive.PhoenixOdometryThread;
 import frc.robot.subsystems.drive.module.ModuleConstants.ModuleConfig;
 import java.util.Queue;
 
-public class ModuleIOTalonFX implements ModuleIO {
+public class ModuleIOTalonFXPRO implements ModuleIO {
   private final TalonFX driveTalon;
   private final TalonFX turnTalon;
   private final CANcoder cancoder;
@@ -69,7 +69,7 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final VoltageOut voltageControl;
   private final NeutralOut neutralControl;
 
-  public ModuleIOTalonFX(ModuleConfig moduleConfig) {
+  public ModuleIOTalonFXPRO(ModuleConfig moduleConfig) {
     driveTalon = new TalonFX(moduleConfig.drive(), DriveConstants.CANIVORE);
     turnTalon = new TalonFX(moduleConfig.turn(), DriveConstants.CANIVORE);
     cancoder = new CANcoder(moduleConfig.encoder(), DriveConstants.CANIVORE);
@@ -126,7 +126,9 @@ public class ModuleIOTalonFX implements ModuleIO {
         turnAppliedVolts,
         turnCurrent,
         turnTemp,
+        driveVelocityError,
         turnPositionError);
+
     driveTalon.optimizeBusUtilization();
     turnTalon.optimizeBusUtilization();
 
@@ -183,22 +185,25 @@ public class ModuleIOTalonFX implements ModuleIO {
   @Override
   public void setDriveVelocitySetpoint(double velocityRadsPerSec, double feedForward) {
     driveTalon.setControl(
-        velocityControl.withVelocity(velocityRadsPerSec).withFeedForward(feedForward));
+        velocityControl
+            .withVelocity(velocityRadsPerSec)
+            .withFeedForward(feedForward)
+            .withEnableFOC(true));
   }
 
   @Override
   public void setTurnPositionSetpoint(Rotation2d position) {
-    turnTalon.setControl(positionControl.withPosition(position.getRotations()));
+    turnTalon.setControl(positionControl.withPosition(position.getRotations()).withEnableFOC(true));
   }
 
   @Override
   public void setDriveVoltage(double volts) {
-    driveTalon.setControl(voltageControl.withOutput(volts));
+    driveTalon.setControl(voltageControl.withOutput(volts).withEnableFOC(true));
   }
 
   @Override
   public void setTurnVoltage(double volts) {
-    turnTalon.setControl(voltageControl.withOutput(volts));
+    turnTalon.setControl(voltageControl.withOutput(volts).withEnableFOC(true));
   }
 
   @Override

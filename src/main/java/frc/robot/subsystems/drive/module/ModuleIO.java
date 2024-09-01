@@ -22,15 +22,17 @@ public interface ModuleIO {
     public Rotation2d drivePosition = new Rotation2d();
     public double driveVelocityRadPerSec = 0.0;
     public double driveAppliedVolts = 0.0;
-    public double[] driveCurrentAmps = new double[] {};
-    public double[] driveTempCelcius = new double[] {};
+    public double driveCurrentAmps = 0.0;
+    public double driveTempCelcius = 0.0;
+    public double driveVelocityError = 0.0;
 
     public Rotation2d turnAbsolutePosition = new Rotation2d();
     public Rotation2d turnPosition = new Rotation2d();
     public double turnVelocityRadPerSec = 0.0;
     public double turnAppliedVolts = 0.0;
-    public double[] turnCurrentAmps = new double[] {};
-    public double[] turnTempCelcius = new double[] {};
+    public double turnCurrentAmps = 0.0;
+    public double turnTempCelcius = 0.0;
+    public double turnPositionError = 0.0;
 
     public double[] odometryTimestamps = new double[] {};
     public Rotation2d[] odometryDrivePositionsRad = new Rotation2d[] {};
@@ -40,15 +42,21 @@ public interface ModuleIO {
   /** Updates the set of loggable inputs. */
   public default void updateInputs(ModuleIOInputs inputs) {}
 
-  /** Run the drive motor at the specified voltage. */
+  public default void setDriveVelocitySetpoint(double velocityRadsPerSec, double feedForward) {}
+
+  public default void setTurnPositionSetpoint(Rotation2d position) {}
+
   public default void setDriveVoltage(double volts) {}
 
-  /** Run the turn motor at the specified voltage. */
   public default void setTurnVoltage(double volts) {}
 
-  /** Enable or disable brake mode on the drive motor. */
+  public default void setDrivePID(double kP, double kI, double kD) {}
+
+  public default void setTurnPID(double kP, double kI, double kD) {}
+
   public default void setDriveBrakeMode(boolean enable) {}
 
-  /** Enable or disable brake mode on the turn motor. */
   public default void setTurnBrakeMode(boolean enable) {}
+
+  public default void stop() {}
 }
