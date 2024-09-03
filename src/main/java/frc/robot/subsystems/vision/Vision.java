@@ -1,12 +1,12 @@
 package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
-import frc.robot.util.VirtualSubsystem;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.Arrays;
 import java.util.Optional;
 import lombok.Getter;
 
-public class Vision extends VirtualSubsystem {
+public class Vision extends SubsystemBase {
   @Getter private final Camera[] cameras;
 
   public Vision(Camera... cameras) {

@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake;
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.NeutralOut;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
@@ -37,7 +38,10 @@ public class IntakeIOTalonFX implements IntakeIO {
   private final StatusSignal<Double> acceleratorCurrentAmps;
   private final StatusSignal<Double> acceleratorTemperatureCelsius;
 
-  private final VoltageOut voltageOut;
+  private final TalonFXConfiguration motorConfig;
+
+  private final NeutralOut neutralControl;
+  private final VoltageOut voltageControl;
 
   public IntakeIOTalonFX() {
     topMotor = new TalonFX(IntakeConstants.TOP_CAN_ID);
@@ -48,13 +52,13 @@ public class IntakeIOTalonFX implements IntakeIO {
     middleSensor = new DigitalInput(IntakeConstants.MIDDLE_SENSOR_CHANNEL);
     finalSensor = new DigitalInput(IntakeConstants.FINAL_SENSOR_CHANNEL);
 
-    TalonFXConfiguration config = new TalonFXConfiguration();
-    config.CurrentLimits.StatorCurrentLimit = IntakeConstants.CURRENT_LIMIT;
-    config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    motorConfig = new TalonFXConfiguration();
+    motorConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.CURRENT_LIMIT;
+    motorConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-    topMotor.getConfigurator().apply(config);
-    bottomMotor.getConfigurator().apply(config);
-    acceleratorMotor.getConfigurator().apply(config);
+    topMotor.getConfigurator().apply(motorConfig);
+    bottomMotor.getConfigurator().apply(motorConfig);
+    acceleratorMotor.getConfigurator().apply(motorConfig);
 
     topPositionRotations = topMotor.getPosition();
     topVelocityRotPerSec = topMotor.getVelocity();
@@ -95,7 +99,8 @@ public class IntakeIOTalonFX implements IntakeIO {
     bottomMotor.optimizeBusUtilization();
     acceleratorMotor.optimizeBusUtilization();
 
-    voltageOut = new VoltageOut(0.0);
+    neutralControl = new NeutralOut();
+    voltageControl = new VoltageOut(0.0);
   }
 
   @Override
@@ -129,16 +134,23 @@ public class IntakeIOTalonFX implements IntakeIO {
 
   @Override
   public void setTopVoltage(double volts) {
-    topMotor.setControl(voltageOut.withOutput(volts));
+    topMotor.setControl(voltageControl.withOutput(volts));
   }
 
   @Override
   public void setBottomVoltage(double volts) {
-    bottomMotor.setControl(voltageOut.withOutput(volts));
+    bottomMotor.setControl(voltageControl.withOutput(volts));
   }
 
   @Override
   public void setAcceleratorVoltage(double volts) {
-    acceleratorMotor.setControl(voltageOut.withOutput(volts));
+    acceleratorMotor.setControl(voltageControl.withOutput(volts));
+  }
+
+  @Override
+  public void stop() {
+    topMotor.setControl(neutralControl);
+    bottomMotor.setControl(neutralControl);
+    acceleratorMotor.setControl(neutralControl);
   }
 }

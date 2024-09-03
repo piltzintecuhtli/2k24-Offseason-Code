@@ -36,4 +36,6 @@ public interface IntakeIO {
   public default void setBottomVoltage(double volts) {}
 
   public default void setAcceleratorVoltage(double volts) {}
+
+  public default void stop() {}
 }

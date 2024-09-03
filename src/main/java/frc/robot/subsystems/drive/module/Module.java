@@ -13,7 +13,6 @@
 
 package frc.robot.subsystems.drive.module;
 
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -23,8 +22,7 @@ import org.littletonrobotics.junction.Logger;
 
 public class Module {
   private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
-  private SimpleMotorFeedforward driveFeedforward =
-      new SimpleMotorFeedforward(ModuleConstants.DRIVE_KS.get(), ModuleConstants.DRIVE_KV.get());
+
   private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[] {};
   private Rotation2d angleSetpoint = null; // Setpoint for closed loop control, null for open loop
   private Double speedSetpoint = null; // Setpoint for closed loop control, null for open loop
@@ -71,9 +69,7 @@ public class Module {
     // Adjust models based on tunable numbers
     if (ModuleConstants.DRIVE_KS.hasChanged(hashCode())
         || ModuleConstants.DRIVE_KV.hasChanged(hashCode())) {
-      driveFeedforward =
-          new SimpleMotorFeedforward(
-              ModuleConstants.DRIVE_KS.get(), ModuleConstants.DRIVE_KV.get());
+      io.setDriveFeedForward(ModuleConstants.DRIVE_KS.get(), ModuleConstants.DRIVE_KV.get(), 0.0);
     }
     if (ModuleConstants.DRIVE_KP.hasChanged(hashCode())
         || ModuleConstants.DRIVE_KD.hasChanged(hashCode())) {
@@ -112,12 +108,11 @@ public class Module {
         // When the error is 90 degrees, the velocity setpoint should be 0. As the wheel turns
         // towards the setpoint, its velocity should increase. This is achieved by
         // taking the component of the velocity in the direction of the setpoint.
-        double adjustSpeedSetpoint = speedSetpoint * Math.cos(inputs.turnPositionError);
+        double adjustSpeedSetpoint = speedSetpoint * inputs.turnPositionError.getCos();
 
         // Run drive controller
         double velocityRadPerSec = adjustSpeedSetpoint / ModuleConstants.WHEEL_RADIUS.get();
-        io.setDriveVelocitySetpoint(
-            velocityRadPerSec, driveFeedforward.calculate(velocityRadPerSec));
+        io.setDriveVelocitySetpoint(velocityRadPerSec);
       }
     }
 

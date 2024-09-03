@@ -67,4 +67,11 @@ public class IntakeIOSim implements IntakeIO {
     acceleratorAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
     acceleratorMotorSim.setInputVoltage(acceleratorAppliedVolts);
   }
+
+  @Override
+  public void stop() {
+    topMotorSim.setInputVoltage(0.0);
+    bottomMotorSim.setInputVoltage(0.0);
+    acceleratorMotorSim.setInputVoltage(0.0);
+  }
 }

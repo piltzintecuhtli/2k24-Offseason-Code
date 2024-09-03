@@ -30,13 +30,17 @@ public class IntakeConstants {
         TOP_CAN_ID = 1;
         BOTTOM_CAN_ID = 2;
         ACCELERATOR_CAN_ID = 3;
+
         INTAKE_SENSOR_CHANNEL = 0;
         MIDDLE_SENSOR_CHANNEL = 0;
         FINAL_SENSOR_CHANNEL = 0;
+
         CURRENT_LIMIT = 40.0;
+
         TOP_MOTOR = DCMotor.getKrakenX60(1);
         BOTTOM_MOTOR = DCMotor.getKrakenX60(1);
         ACCELERATOR_MOTOR = DCMotor.getKrakenX60(1);
+
         TOP_GEAR_RATIO = 1.0;
         BOTTOM_GEAR_RATIO = 1.0;
         ACCELERATOR_GEAR_RATIO = 1.0;

@@ -42,21 +42,21 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final Queue<Double> drivePositionQueue;
   private final Queue<Double> turnPositionQueue;
 
-  private final StatusSignal<Double> drivePosition;
-  private final StatusSignal<Double> driveVelocity;
+  private final StatusSignal<Double> drivePositionRotations;
+  private final StatusSignal<Double> driveVelocityRotPerSec;
   private final StatusSignal<Double> driveAppliedVolts;
   private final StatusSignal<Double> driveCurrent;
   private final StatusSignal<Double> driveTemp;
 
-  private final StatusSignal<Double> turnAbsolutePosition;
-  private final StatusSignal<Double> turnPosition;
-  private final StatusSignal<Double> turnVelocity;
+  private final StatusSignal<Double> turnAbsolutePositionRotations;
+  private final StatusSignal<Double> turnPositionRotations;
+  private final StatusSignal<Double> turnVelocityRotPerSec;
   private final StatusSignal<Double> turnAppliedVolts;
   private final StatusSignal<Double> turnCurrent;
   private final StatusSignal<Double> turnTemp;
 
-  private final StatusSignal<Double> driveVelocityError;
-  private final StatusSignal<Double> turnPositionError;
+  private final StatusSignal<Double> driveVelocityErrorRotPerSec;
+  private final StatusSignal<Double> turnPositionErrorRotations;
 
   private final boolean isTurnMotorInverted = true;
   private final Rotation2d absoluteEncoderOffset;
@@ -64,10 +64,10 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final TalonFXConfiguration driveConfig;
   private final TalonFXConfiguration turnConfig;
 
+  private final NeutralOut neutralControl;
+  private final VoltageOut voltageControl;
   private final VelocityVoltage velocityControl;
   private final PositionVoltage positionControl;
-  private final VoltageOut voltageControl;
-  private final NeutralOut neutralControl;
 
   public ModuleIOTalonFX(ModuleConfig moduleConfig) {
     driveTalon = new TalonFX(moduleConfig.drive(), DriveConstants.CANIVORE);
@@ -81,57 +81,61 @@ public class ModuleIOTalonFX implements ModuleIO {
     turnPositionQueue =
         PhoenixOdometryThread.getInstance().registerSignal(turnTalon, turnTalon.getPosition());
 
-    drivePosition = driveTalon.getPosition();
-    driveVelocity = driveTalon.getVelocity();
+    drivePositionRotations = driveTalon.getPosition();
+    driveVelocityRotPerSec = driveTalon.getVelocity();
     driveAppliedVolts = driveTalon.getMotorVoltage();
     driveCurrent = driveTalon.getSupplyCurrent();
     driveTemp = driveTalon.getDeviceTemp();
 
-    turnAbsolutePosition = cancoder.getAbsolutePosition();
-    turnPosition = turnTalon.getPosition();
-    turnVelocity = turnTalon.getVelocity();
+    turnAbsolutePositionRotations = cancoder.getAbsolutePosition();
+    turnPositionRotations = turnTalon.getPosition();
+    turnVelocityRotPerSec = turnTalon.getVelocity();
     turnAppliedVolts = turnTalon.getMotorVoltage();
     turnCurrent = turnTalon.getSupplyCurrent();
     turnTemp = turnTalon.getDeviceTemp();
 
-    driveVelocityError = driveTalon.getClosedLoopError();
-    turnPositionError = turnTalon.getClosedLoopError();
+    driveVelocityErrorRotPerSec = driveTalon.getClosedLoopError();
+    turnPositionErrorRotations = turnTalon.getClosedLoopError();
 
     driveConfig = new TalonFXConfiguration();
     driveConfig.CurrentLimits.SupplyCurrentLimit = ModuleConstants.DRIVE_CURRENT_LIMIT;
     driveConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+    driveConfig.Slot0.kP = ModuleConstants.DRIVE_KP.get();
+    driveConfig.Slot0.kD = ModuleConstants.DRIVE_KD.get();
+    driveConfig.Slot0.kS = ModuleConstants.DRIVE_KS.get();
+    driveConfig.Slot0.kV = ModuleConstants.DRIVE_KV.get();
     driveTalon.getConfigurator().apply(driveConfig);
-    setDriveBrakeMode(true);
 
     turnConfig = new TalonFXConfiguration();
     turnConfig.CurrentLimits.SupplyCurrentLimit = ModuleConstants.TURN_CURRENT_LIMIT;
     turnConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+    turnConfig.Slot0.kP = ModuleConstants.TURN_KP.get();
+    turnConfig.Slot0.kD = ModuleConstants.TURN_KD.get();
     turnTalon.getConfigurator().apply(turnConfig);
-    setTurnBrakeMode(true);
 
     cancoder.getConfigurator().apply(new CANcoderConfiguration());
 
     BaseStatusSignal.setUpdateFrequencyForAll(
-        ModuleConstants.ODOMETRY_FREQUENCY, drivePosition, turnPosition);
+        ModuleConstants.ODOMETRY_FREQUENCY, drivePositionRotations, turnPositionRotations);
     BaseStatusSignal.setUpdateFrequencyForAll(
         50.0,
-        driveVelocity,
+        driveVelocityRotPerSec,
         driveAppliedVolts,
         driveCurrent,
         driveTemp,
-        turnAbsolutePosition,
-        turnVelocity,
+        turnAbsolutePositionRotations,
+        turnVelocityRotPerSec,
         turnAppliedVolts,
         turnCurrent,
         turnTemp,
-        turnPositionError);
+        turnPositionErrorRotations);
     driveTalon.optimizeBusUtilization();
     turnTalon.optimizeBusUtilization();
 
+    neutralControl = new NeutralOut();
+    voltageControl = new VoltageOut(0.0);
     velocityControl = new VelocityVoltage(0.0);
     positionControl = new PositionVoltage(0.0);
-    voltageControl = new VoltageOut(0.0);
-    neutralControl = new NeutralOut();
   }
 
   @Override
@@ -155,33 +159,37 @@ public class ModuleIOTalonFX implements ModuleIO {
 
     inputs.drivePosition =
         Rotation2d.fromRotations(
-            drivePosition.getValueAsDouble() / ModuleConstants.DRIVE_GEAR_RATIO);
+            drivePositionRotations.getValueAsDouble() / ModuleConstants.DRIVE_GEAR_RATIO);
     inputs.driveVelocityRadPerSec =
-        Units.rotationsToRadians(driveVelocity.getValueAsDouble())
+        Units.rotationsToRadians(driveVelocityRotPerSec.getValueAsDouble())
             / ModuleConstants.DRIVE_GEAR_RATIO;
     inputs.driveAppliedVolts = driveAppliedVolts.getValueAsDouble();
     inputs.driveCurrentAmps = driveCurrent.getValueAsDouble();
     inputs.driveTempCelcius = driveTemp.getValueAsDouble();
 
     inputs.turnAbsolutePosition =
-        Rotation2d.fromRotations(turnAbsolutePosition.getValueAsDouble())
+        Rotation2d.fromRotations(turnAbsolutePositionRotations.getValueAsDouble())
             .minus(absoluteEncoderOffset);
     inputs.turnPosition =
-        Rotation2d.fromRotations(turnPosition.getValueAsDouble() / ModuleConstants.TURN_GEAR_RATIO);
+        Rotation2d.fromRotations(
+            turnPositionRotations.getValueAsDouble() / ModuleConstants.TURN_GEAR_RATIO);
     inputs.turnVelocityRadPerSec =
-        Units.rotationsToRadians(turnVelocity.getValueAsDouble()) / ModuleConstants.TURN_GEAR_RATIO;
+        Units.rotationsToRadians(turnVelocityRotPerSec.getValueAsDouble())
+            / ModuleConstants.TURN_GEAR_RATIO;
     inputs.turnAppliedVolts = turnAppliedVolts.getValueAsDouble();
     inputs.turnCurrentAmps = turnCurrent.getValueAsDouble();
     inputs.turnTempCelcius = turnTemp.getValueAsDouble();
 
-    inputs.driveVelocityError = driveVelocityError.getValueAsDouble();
-    inputs.turnPositionError = turnPositionError.getValueAsDouble();
+    inputs.driveVelocityErrorRadPerSec =
+        Units.rotationsToRadians(driveVelocityErrorRotPerSec.getValueAsDouble());
+    inputs.turnPositionError =
+        Rotation2d.fromRotations(turnPositionErrorRotations.getValueAsDouble());
   }
 
   @Override
-  public void setDriveVelocitySetpoint(double velocityRadsPerSec, double feedForward) {
+  public void setDriveVelocitySetpoint(double velocityRadsPerSec) {
     driveTalon.setControl(
-        velocityControl.withVelocity(velocityRadsPerSec).withFeedForward(feedForward));
+        velocityControl.withVelocity(Units.radiansToRotations(velocityRadsPerSec)));
   }
 
   @Override
@@ -213,6 +221,13 @@ public class ModuleIOTalonFX implements ModuleIO {
     turnConfig.Slot0.kI = kI;
     turnConfig.Slot0.kD = kD;
     turnTalon.getConfigurator().apply(turnConfig, 0.01);
+  }
+
+  @Override
+  public void setDriveFeedForward(double kS, double kV, double kA) {
+    driveConfig.Slot0.kS = kS;
+    driveConfig.Slot0.kV = kV;
+    driveConfig.Slot0.kA = kA;
   }
 
   @Override

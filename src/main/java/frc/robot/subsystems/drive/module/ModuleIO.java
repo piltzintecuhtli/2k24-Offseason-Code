@@ -24,7 +24,6 @@ public interface ModuleIO {
     public double driveAppliedVolts = 0.0;
     public double driveCurrentAmps = 0.0;
     public double driveTempCelcius = 0.0;
-    public double driveVelocityError = 0.0;
 
     public Rotation2d turnAbsolutePosition = new Rotation2d();
     public Rotation2d turnPosition = new Rotation2d();
@@ -32,7 +31,9 @@ public interface ModuleIO {
     public double turnAppliedVolts = 0.0;
     public double turnCurrentAmps = 0.0;
     public double turnTempCelcius = 0.0;
-    public double turnPositionError = 0.0;
+
+    public double driveVelocityErrorRadPerSec = 0.0;
+    public Rotation2d turnPositionError = new Rotation2d();
 
     public double[] odometryTimestamps = new double[] {};
     public Rotation2d[] odometryDrivePositionsRad = new Rotation2d[] {};
@@ -42,7 +43,7 @@ public interface ModuleIO {
   /** Updates the set of loggable inputs. */
   public default void updateInputs(ModuleIOInputs inputs) {}
 
-  public default void setDriveVelocitySetpoint(double velocityRadsPerSec, double feedForward) {}
+  public default void setDriveVelocitySetpoint(double velocityRadsPerSec) {}
 
   public default void setTurnPositionSetpoint(Rotation2d position) {}
 
@@ -53,6 +54,8 @@ public interface ModuleIO {
   public default void setDrivePID(double kP, double kI, double kD) {}
 
   public default void setTurnPID(double kP, double kI, double kD) {}
+
+  public default void setDriveFeedForward(double kS, double kV, double kA) {}
 
   public default void setDriveBrakeMode(boolean enable) {}
 

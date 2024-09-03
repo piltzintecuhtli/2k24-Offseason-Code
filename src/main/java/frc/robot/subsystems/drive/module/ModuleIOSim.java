@@ -15,6 +15,7 @@ package frc.robot.subsystems.drive.module;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -26,6 +27,7 @@ public class ModuleIOSim implements ModuleIO {
 
   private final PIDController driveFeedback;
   private final PIDController turnFeedback;
+  private SimpleMotorFeedforward driveFeedForward;
 
   private final Rotation2d turnAbsoluteInitPosition;
 
@@ -44,6 +46,8 @@ public class ModuleIOSim implements ModuleIO {
             ModuleConstants.TURN_GEAR_RATIO,
             ModuleConstants.TURN_MOMENT_OF_INERTIA);
 
+    driveFeedForward =
+        new SimpleMotorFeedforward(ModuleConstants.DRIVE_KS.get(), ModuleConstants.DRIVE_KV.get());
     driveFeedback =
         new PIDController(
             ModuleConstants.DRIVE_KP.get(),
@@ -84,14 +88,18 @@ public class ModuleIOSim implements ModuleIO {
     inputs.turnAppliedVolts = turnAppliedVolts;
     inputs.turnCurrentAmps = Math.abs(turnSim.getCurrentDrawAmps());
 
-    inputs.driveVelocityError = driveFeedback.getVelocityError();
-    inputs.turnPositionError = turnFeedback.getPositionError();
+    inputs.driveVelocityErrorRadPerSec = driveFeedback.getVelocityError();
+    inputs.turnPositionError = Rotation2d.fromRadians(turnFeedback.getPositionError());
   }
 
   @Override
-  public void setDriveVelocitySetpoint(double velocityRadPerSec, double feedForward) {
+  public void setDriveVelocitySetpoint(double velocityRadPerSec) {
     driveAppliedVolts =
-        MathUtil.clamp(driveFeedback.calculate(velocityRadPerSec) + feedForward, -12.0, 12.0);
+        MathUtil.clamp(
+            driveFeedback.calculate(velocityRadPerSec)
+                + driveFeedForward.calculate(velocityRadPerSec),
+            -12.0,
+            12.0);
     driveSim.setInputVoltage(driveAppliedVolts);
   }
 
@@ -125,5 +133,13 @@ public class ModuleIOSim implements ModuleIO {
   }
 
   @Override
-  public void stop() {}
+  public void setDriveFeedForward(double kS, double kV, double kA) {
+    driveFeedForward = new SimpleMotorFeedforward(kS, kV);
+  }
+
+  @Override
+  public void stop() {
+    driveSim.setInputVoltage(0.0);
+    turnSim.setInputVoltage(0.0);
+  }
 }
