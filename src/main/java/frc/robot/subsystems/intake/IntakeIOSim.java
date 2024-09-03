@@ -15,12 +15,15 @@ public class IntakeIOSim implements IntakeIO {
   private double acceleratorAppliedVolts;
 
   public IntakeIOSim() {
-    topMotorSim = new DCMotorSim(IntakeConstants.TOP_MOTOR, IntakeConstants.TOP_GEAR_RATIO, 0.004);
+    topMotorSim =
+        new DCMotorSim(IntakeConstants.TOP_MOTOR_CONFIG, IntakeConstants.TOP_GEAR_RATIO, 0.004);
     bottomMotorSim =
-        new DCMotorSim(IntakeConstants.BOTTOM_MOTOR, IntakeConstants.TOP_GEAR_RATIO, 0.004);
+        new DCMotorSim(IntakeConstants.BOTTOM_MOTOR_CONFIG, IntakeConstants.TOP_GEAR_RATIO, 0.004);
     acceleratorMotorSim =
         new DCMotorSim(
-            IntakeConstants.ACCELERATOR_MOTOR, IntakeConstants.ACCELERATOR_GEAR_RATIO, 0.004);
+            IntakeConstants.ACCELERATOR_MOTOR_CONFIG,
+            IntakeConstants.ACCELERATOR_GEAR_RATIO,
+            0.004);
 
     topAppliedVolts = 0.0;
     bottomAppliedVolts = 0.0;

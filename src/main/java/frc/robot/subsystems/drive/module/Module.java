@@ -21,13 +21,13 @@ import frc.robot.util.Alert.AlertType;
 import org.littletonrobotics.junction.Logger;
 
 public class Module {
-  private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
+  private final ModuleIOInputsAutoLogged inputs;
 
-  private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[] {};
-  private Rotation2d angleSetpoint = null; // Setpoint for closed loop control, null for open loop
-  private Double speedSetpoint = null; // Setpoint for closed loop control, null for open loop
-  private Rotation2d turnRelativeOffset = null; // Relative + Offset = Absolute
-  private int cycleCount = 0;
+  private SwerveModulePosition[] odometryPositions;
+  private Rotation2d angleSetpoint; // Setpoint for closed loop control, null for open loop
+  private Double speedSetpoint; // Setpoint for closed loop control, null for open loop
+  private Rotation2d turnRelativeOffset; // Relative + Offset = Absolute
+  private int cycleCount;
 
   private final Alert unitializedAlert;
   private final Alert outOfSyncAlert;
@@ -36,6 +36,14 @@ public class Module {
   private final int index;
 
   public Module(ModuleIO io, int index) {
+    inputs = new ModuleIOInputsAutoLogged();
+
+    odometryPositions = new SwerveModulePosition[] {};
+    angleSetpoint = null;
+    speedSetpoint = null;
+    turnRelativeOffset = null;
+    cycleCount = 0;
+
     this.io = io;
     this.index = index;
 
@@ -69,7 +77,7 @@ public class Module {
     // Adjust models based on tunable numbers
     if (ModuleConstants.DRIVE_KS.hasChanged(hashCode())
         || ModuleConstants.DRIVE_KV.hasChanged(hashCode())) {
-      io.setDriveFeedForward(ModuleConstants.DRIVE_KS.get(), ModuleConstants.DRIVE_KV.get(), 0.0);
+      io.setDriveFeedforward(ModuleConstants.DRIVE_KS.get(), ModuleConstants.DRIVE_KV.get(), 0.0);
     }
     if (ModuleConstants.DRIVE_KP.hasChanged(hashCode())
         || ModuleConstants.DRIVE_KD.hasChanged(hashCode())) {
@@ -99,7 +107,7 @@ public class Module {
 
     // Run closed loop turn control
     if (angleSetpoint != null) {
-      io.setTurnPositionSetpoint(angleSetpoint);
+      io.setTurnPositionSetpoint(inputs.turnPosition, angleSetpoint);
 
       // Run closed loop drive control
       // Only allowed if closed loop turn control is running
@@ -112,7 +120,7 @@ public class Module {
 
         // Run drive controller
         double velocityRadPerSec = adjustSpeedSetpoint / ModuleConstants.WHEEL_RADIUS.get();
-        io.setDriveVelocitySetpoint(velocityRadPerSec);
+        io.setDriveVelocitySetpoint(inputs.driveVelocityRadPerSec, velocityRadPerSec);
       }
     }
 

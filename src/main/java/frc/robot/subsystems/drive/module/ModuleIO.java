@@ -43,9 +43,11 @@ public interface ModuleIO {
   /** Updates the set of loggable inputs. */
   public default void updateInputs(ModuleIOInputs inputs) {}
 
-  public default void setDriveVelocitySetpoint(double velocityRadsPerSec) {}
+  public default void setDriveVelocitySetpoint(
+      double currentVelocityRadPerSec, double setpointVelocityRadsPerSec) {}
 
-  public default void setTurnPositionSetpoint(Rotation2d position) {}
+  public default void setTurnPositionSetpoint(
+      Rotation2d currentPosition, Rotation2d setpointPosition) {}
 
   public default void setDriveVoltage(double volts) {}
 
@@ -55,7 +57,7 @@ public interface ModuleIO {
 
   public default void setTurnPID(double kP, double kI, double kD) {}
 
-  public default void setDriveFeedForward(double kS, double kV, double kA) {}
+  public default void setDriveFeedforward(double kS, double kV, double kA) {}
 
   public default void setDriveBrakeMode(boolean enable) {}
 

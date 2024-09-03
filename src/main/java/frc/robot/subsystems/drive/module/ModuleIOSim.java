@@ -22,12 +22,13 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants;
 
 public class ModuleIOSim implements ModuleIO {
-  private DCMotorSim driveSim;
-  private DCMotorSim turnSim;
+  private DCMotorSim driveMotorSim;
+  private DCMotorSim turnMotorSim;
+
+  private SimpleMotorFeedforward driveFeedforward;
 
   private final PIDController driveFeedback;
   private final PIDController turnFeedback;
-  private SimpleMotorFeedforward driveFeedForward;
 
   private final Rotation2d turnAbsoluteInitPosition;
 
@@ -35,19 +36,20 @@ public class ModuleIOSim implements ModuleIO {
   private double turnAppliedVolts;
 
   public ModuleIOSim() {
-    driveSim =
+    driveMotorSim =
         new DCMotorSim(
             ModuleConstants.DRIVE_MOTOR_CONFIG,
             ModuleConstants.DRIVE_GEAR_RATIO,
             ModuleConstants.DRIVE_MOMENT_OF_INERTIA);
-    turnSim =
+    turnMotorSim =
         new DCMotorSim(
             ModuleConstants.TURN_MOTOR_CONFIG,
             ModuleConstants.TURN_GEAR_RATIO,
             ModuleConstants.TURN_MOMENT_OF_INERTIA);
 
-    driveFeedForward =
+    driveFeedforward =
         new SimpleMotorFeedforward(ModuleConstants.DRIVE_KS.get(), ModuleConstants.DRIVE_KV.get());
+
     driveFeedback =
         new PIDController(
             ModuleConstants.DRIVE_KP.get(),
@@ -69,57 +71,61 @@ public class ModuleIOSim implements ModuleIO {
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
-    driveSim.update(Constants.LOOP_PERIOD_SECS);
-    turnSim.update(Constants.LOOP_PERIOD_SECS);
+    driveMotorSim.update(Constants.LOOP_PERIOD_SECS);
+    turnMotorSim.update(Constants.LOOP_PERIOD_SECS);
 
     inputs.odometryTimestamps = new double[] {Timer.getFPGATimestamp()};
     inputs.odometryDrivePositionsRad = new Rotation2d[] {inputs.drivePosition};
     inputs.odometryTurnPositions = new Rotation2d[] {inputs.turnPosition};
 
-    inputs.drivePosition = Rotation2d.fromRadians(driveSim.getAngularPositionRad());
-    inputs.driveVelocityRadPerSec = driveSim.getAngularVelocityRadPerSec();
+    inputs.drivePosition = Rotation2d.fromRadians(driveMotorSim.getAngularPositionRad());
+    inputs.driveVelocityRadPerSec = driveMotorSim.getAngularVelocityRadPerSec();
     inputs.driveAppliedVolts = driveAppliedVolts;
-    inputs.driveCurrentAmps = Math.abs(driveSim.getCurrentDrawAmps());
+    inputs.driveCurrentAmps = Math.abs(driveMotorSim.getCurrentDrawAmps());
 
     inputs.turnAbsolutePosition =
-        new Rotation2d(turnSim.getAngularPositionRad()).plus(turnAbsoluteInitPosition);
-    inputs.turnPosition = new Rotation2d(turnSim.getAngularPositionRad());
-    inputs.turnVelocityRadPerSec = turnSim.getAngularVelocityRadPerSec();
+        new Rotation2d(turnMotorSim.getAngularPositionRad()).plus(turnAbsoluteInitPosition);
+    inputs.turnPosition = new Rotation2d(turnMotorSim.getAngularPositionRad());
+    inputs.turnVelocityRadPerSec = turnMotorSim.getAngularVelocityRadPerSec();
     inputs.turnAppliedVolts = turnAppliedVolts;
-    inputs.turnCurrentAmps = Math.abs(turnSim.getCurrentDrawAmps());
+    inputs.turnCurrentAmps = Math.abs(turnMotorSim.getCurrentDrawAmps());
 
     inputs.driveVelocityErrorRadPerSec = driveFeedback.getVelocityError();
     inputs.turnPositionError = Rotation2d.fromRadians(turnFeedback.getPositionError());
   }
 
   @Override
-  public void setDriveVelocitySetpoint(double velocityRadPerSec) {
+  public void setDriveVelocitySetpoint(
+      double currentVelocityRadPerSec, double setpointVelocityRadPerSec) {
     driveAppliedVolts =
         MathUtil.clamp(
-            driveFeedback.calculate(velocityRadPerSec)
-                + driveFeedForward.calculate(velocityRadPerSec),
+            driveFeedback.calculate(currentVelocityRadPerSec, setpointVelocityRadPerSec)
+                + driveFeedforward.calculate(setpointVelocityRadPerSec),
             -12.0,
             12.0);
-    driveSim.setInputVoltage(driveAppliedVolts);
+    driveMotorSim.setInputVoltage(driveAppliedVolts);
   }
 
   @Override
-  public void setTurnPositionSetpoint(Rotation2d setpointPosition) {
+  public void setTurnPositionSetpoint(Rotation2d currentPosition, Rotation2d setpointPosition) {
     turnAppliedVolts =
-        MathUtil.clamp(turnFeedback.calculate(setpointPosition.getRadians()), -12.0, 12.0);
-    driveSim.setInputVoltage(turnAppliedVolts);
+        MathUtil.clamp(
+            turnFeedback.calculate(currentPosition.getRadians(), setpointPosition.getRadians()),
+            -12.0,
+            12.0);
+    turnMotorSim.setInputVoltage(turnAppliedVolts);
   }
 
   @Override
   public void setDriveVoltage(double volts) {
     driveAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
-    driveSim.setInputVoltage(driveAppliedVolts);
+    driveMotorSim.setInputVoltage(driveAppliedVolts);
   }
 
   @Override
   public void setTurnVoltage(double volts) {
     turnAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
-    turnSim.setInputVoltage(turnAppliedVolts);
+    turnMotorSim.setInputVoltage(turnAppliedVolts);
   }
 
   @Override
@@ -133,13 +139,16 @@ public class ModuleIOSim implements ModuleIO {
   }
 
   @Override
-  public void setDriveFeedForward(double kS, double kV, double kA) {
-    driveFeedForward = new SimpleMotorFeedforward(kS, kV);
+  public void setDriveFeedforward(double kS, double kV, double kA) {
+    driveFeedforward = new SimpleMotorFeedforward(kS, kV, kA);
   }
 
   @Override
   public void stop() {
-    driveSim.setInputVoltage(0.0);
-    turnSim.setInputVoltage(0.0);
+    driveAppliedVolts = 0.0;
+    turnAppliedVolts = 0.0;
+
+    driveMotorSim.setInputVoltage(0.0);
+    turnMotorSim.setInputVoltage(0.0);
   }
 }

@@ -6,7 +6,7 @@ import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 
 public class Camera {
-  private final CameraIOInputsAutoLogged inputs = new CameraIOInputsAutoLogged();
+  private final CameraIOInputsAutoLogged inputs;
 
   private final CameraIO io;
   @Getter private final String name;
@@ -22,6 +22,8 @@ public class Camera {
       double verticalFOV,
       double primaryXYStandardDeviationCoefficient,
       double secondaryXYStandardDeviationCoefficient) {
+    inputs = new CameraIOInputsAutoLogged();
+
     this.io = io;
     this.name = io.getName();
     this.cameraType = io.getCameraType();

@@ -34,26 +34,19 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Drive extends SubsystemBase {
-  private final LinearFilter xFilter = LinearFilter.movingAverage(10);
-  private final LinearFilter yFilter = LinearFilter.movingAverage(10);
-  private double filteredX = 0;
+  private final LinearFilter xFilter;
+  private final LinearFilter yFilter;
+  private double filteredX;
   private double filteredY = 0;
-  private Rotation2d rawGyroRotation = new Rotation2d();
+  private Rotation2d rawGyroRotation;
 
-  @Getter
-  private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(getModuleTranslations());
+  @Getter private SwerveDriveKinematics kinematics;
+  private SwerveModulePosition[] lastModulePositions;
 
-  private SwerveModulePosition[] lastModulePositions = // For delta tracking
-      new SwerveModulePosition[] {
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition()
-      };
-  private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-  private final Module[] modules = new Module[4]; // FL, FR, BL, BR
-
+  private final GyroIOInputsAutoLogged gyroInputs;
   private final GyroIO gyroIO;
+
+  private final Module[] modules; // FL, FR, BL, BR
 
   public Drive(
       GyroIO gyroIO,
@@ -61,11 +54,29 @@ public class Drive extends SubsystemBase {
       ModuleIO frModuleIO,
       ModuleIO blModuleIO,
       ModuleIO brModuleIO) {
-    this.gyroIO = gyroIO;
+    xFilter = LinearFilter.movingAverage(10);
+    yFilter = LinearFilter.movingAverage(10);
+    filteredX = 0;
+    filteredY = 0;
+    rawGyroRotation = new Rotation2d();
+
+    kinematics = new SwerveDriveKinematics(getModuleTranslations());
+    lastModulePositions =
+        new SwerveModulePosition[] {
+          new SwerveModulePosition(),
+          new SwerveModulePosition(),
+          new SwerveModulePosition(),
+          new SwerveModulePosition()
+        };
+
+    modules = new Module[4];
     modules[0] = new Module(flModuleIO, 0);
     modules[1] = new Module(frModuleIO, 1);
     modules[2] = new Module(blModuleIO, 2);
     modules[3] = new Module(brModuleIO, 3);
+
+    gyroInputs = new GyroIOInputsAutoLogged();
+    this.gyroIO = gyroIO;
 
     // Start threads (no-op for each if no signals have been created)
     PhoenixOdometryThread.getInstance().start();
