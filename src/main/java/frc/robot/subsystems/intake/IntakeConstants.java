@@ -25,6 +25,7 @@ public class IntakeConstants {
   static {
     switch (Constants.ROBOT) {
       case ROBOT_KRAKEN_X60:
+      case ROBOT_KRAKEN_X60_PRO:
       case ROBOT_SIM:
       default:
         TOP_CAN_ID = 1;
